@@ -3,11 +3,16 @@ import GoToActivity from "../../components/Buttons/GoToActivity";
 import Logotipo from '../../assets/img/Logotipo.svg';
 import EntrarButton from "../../components/Buttons/Entrar";
 import { loginUser } from "../../services/AuthService";
+import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+
 
 function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const { login } = useAuth(); 
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -15,8 +20,11 @@ function LoginForm() {
 
         try {
             const data = await loginUser(email, password);
-            localStorage.setItem("access_token", data.access);
-            localStorage.setItem("refresh_token", data.refresh);
+            login(data.access, data.refresh); 
+
+            if (data.access && data.refresh) {
+                navigate('/atividades');
+            }
         } catch (err) {
             setError("Falha na autenticação. Verifique suas credenciais.");
         }
@@ -72,7 +80,7 @@ function LoginForm() {
 
                 <div className="flex justify-between items-center mt-8">
                     <GoToActivity />
-                    <EntrarButton is_navigate={false} />
+                    <EntrarButton is_navigate={false} type="submit" />
                 </div>
             </form>
         </main>
