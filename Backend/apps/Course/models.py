@@ -2,7 +2,7 @@ from django.db import models
 from uuid import uuid4
 
 class Course(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    course_id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     course_name = models.CharField(max_length=255, db_column='course_name')
     course_year = models.IntegerField(db_column='course_year')
     is_active = models.BooleanField(default=True, db_column='is_active')

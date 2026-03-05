@@ -1,13 +1,16 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { createCourse, listCourses } from '../../../services/CourseCrud';
+import { createCourse } from '../../../services/CourseCrud';
 import { type Course } from '../../../types/Courses';
 
 interface AsideMenuProps {
+    courses: Course[];
+    selectedCourseId: string | null;
+    onCourseSelected: (id: string) => void;
     onCourseCreated: () => void;
 }
 
-function AsideMenu({ onCourseCreated }: AsideMenuProps) {
+function AsideMenu({ courses, selectedCourseId, onCourseSelected, onCourseCreated }: AsideMenuProps) {
     const { user } = useAuth();
     const modalRef = useRef<HTMLDialogElement>(null);
 
@@ -15,17 +18,6 @@ function AsideMenu({ onCourseCreated }: AsideMenuProps) {
     const [courseYear, setCourseYear] = useState(new Date().getFullYear());
     const [color, setColor] = useState('#621708');
     const [isLoading, setIsLoading] = useState(false);
-    const [courseList, setCourseList] = useState<Course[]>([]);
-
-    useEffect(() => {
-        const fetchInitialCourses = async () => {
-            const response = await listCourses();
-            setCourseList(response);
-            console.log("Fetched courses:", response);
-        };
-        fetchInitialCourses();
-    }, [user]);
-
 
     const openModal = () => modalRef.current?.showModal();
     
@@ -41,15 +33,11 @@ function AsideMenu({ onCourseCreated }: AsideMenuProps) {
         setIsLoading(true);
 
         try {
-            //@ts-ignore
-            const response = await createCourse({ course_name: courseName, course_year: courseYear.toString() });
-
-            console.log("Course created:", { courseName, courseYear, color });
-            
+            await createCourse({ course_name: courseName, course_year: courseYear.toString(), color });
             onCourseCreated();
             closeModal();
         } catch (error) {
-            console.error("Error creating course", error);
+            console.error("Falha ao criar curso", error);
         } finally {
             setIsLoading(false);
         }
@@ -71,12 +59,22 @@ function AsideMenu({ onCourseCreated }: AsideMenuProps) {
                 )}
             </div>
 
-            <ul className="menu w-full">
-                {courseList.map((course) => (
-                    <li key={course.id}>
-                        <a className="hover:bg-white/10 active:bg-white/20">{course.course_name}</a>
-                    </li>
-                ))}
+            <ul className="menu w-full text-base-content">
+                {courses.map((course) => {
+                    
+                    return (
+                        <li key={course.course_id || Math.random()}> 
+                            <a 
+                                className={selectedCourseId === course.course_id ? "active font-bold text-white bg-white/20" : "hover:bg-white/10 text-gray-300"}
+                                onClick={() => {
+                                    onCourseSelected(course.course_id);
+                                }}
+                            >
+                                {course.course_name}
+                            </a>
+                        </li>
+                    );
+                })}
             </ul>
 
             <dialog ref={modalRef} className="modal text-gray-800">

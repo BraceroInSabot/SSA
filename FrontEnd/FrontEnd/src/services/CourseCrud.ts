@@ -11,7 +11,7 @@ const retrieveCourse = async (courseID: number) => {
     return response.data as Course;
 };
 
-const createCourse = async (courseData: { course_name: string; course_year: string }) => {
+const createCourse = async (courseData: { course_name: string; course_year: string, color: string }) => {
     const response = await api.post('course/create/', courseData);
     return response.data as Course;
 };

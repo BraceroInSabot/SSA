@@ -4,8 +4,6 @@ import { useAuth } from '../../contexts/AuthContext';
 
 function NavBar() {
   const { isAuthenticated, user, logout } = useAuth();
-  
-  console.log(user)
 
   return (
     <div className="navbar justify-between bg-[#BC3908] p-1 h-[50px] pl-5 pr-5">

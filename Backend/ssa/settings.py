@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'apps.AuthUser',
     'apps.Course',
+    'apps.Activity',
     'corsheaders',
 ]
 
