@@ -1,5 +1,5 @@
 interface Activity {
-    activity_id: number;
+    activity_id: string;
     name: string;
     total_grade: Number;
     has_submission: boolean

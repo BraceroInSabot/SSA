@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import Login from '../page/Login';
-import Activity from '../page/Activity';
+import Activities from '../page/Activities';
+import SingleActivity from '../page/Activity';
 
 const router = createBrowserRouter([
   {
@@ -9,7 +10,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/atividades',
-    element: <Activity />,
+    element: <Activities />,
+  },
+  {
+    path: '/atividade/:id',
+    element: <SingleActivity />,
   }
 ]);
 

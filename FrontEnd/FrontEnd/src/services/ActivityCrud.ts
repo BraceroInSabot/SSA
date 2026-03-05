@@ -6,9 +6,14 @@ const listActivities = async (course_id: string) => {
     return response.data as Activity[];
 };
 
+const retrieveActivity = async (activity_id: string) => {
+    const response = await api.get(`activity/${activity_id}/`);
+    return response.data as Activity;
+};
+
 const createActivity = async (activityData: Omit<Activity, 'activity_id'>) => {
     const response = await api.post('activity/create/', activityData);
     return response.data as Activity;
 };
 
-export {listActivities, createActivity};
+export {listActivities, retrieveActivity, createActivity};
