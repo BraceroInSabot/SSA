@@ -21,9 +21,10 @@ SECRET_KEY = config('SECRET_KEY', default='', cast=str)
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = [
-    'api.ssa.com.br',
-    'ssa.com.br',
-    'www.ssa.com.br',
+    'api.ssa.bracero.com.br',
+    'ssa.bracero.com.br',
+    'localhost',
+    'www.ssa.bracero.com.br',
     '127.0.0.1',
 ]
 
@@ -63,8 +64,8 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "https://ssa.com.br",
-    "https://www.ssa.com.br",
+    "https://ssa.bracero.com.br",
+    "https://api.ssa.bracero.com.br",
 ]
 
 if DEBUG:
@@ -77,8 +78,8 @@ if DEBUG:
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://ssa.com.br",
-    "https://www.ssa.com.br",
+    "https://ssa.bracero.com.br",
+    "https://api.ssa.bracero.com.br",
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
