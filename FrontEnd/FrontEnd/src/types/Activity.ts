@@ -1,3 +1,8 @@
+interface AttachedFile {
+    attached_files_id: string;
+    file: string; 
+}
+
 interface Activity {
     activity_id: string;
     name: string;
@@ -9,6 +14,7 @@ interface Activity {
     description: string;
     is_active: boolean;
     course: string; // course ID
+    attached_files: AttachedFile[];
 }
 
-export type { Activity };
+export type { Activity, AttachedFile };

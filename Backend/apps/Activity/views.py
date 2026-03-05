@@ -1,9 +1,10 @@
 from django.shortcuts import render
-from apps.Activity.models import Activity
+from apps.Activity.models import Activity, Activity_Attached_Files
 from apps.Course.models import Course
-from apps.Activity.serializer import ActivitySerializer
+from apps.Activity.serializer import ActivitySerializer, ActivityFileSerializer
 from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from django.shortcuts import get_object_or_404
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class ActivityListView(ListAPIView):
@@ -32,3 +33,22 @@ class ActivityUpdateView(RetrieveUpdateDestroyAPIView):
     queryset = Activity.objects.all()
     serializer_class = ActivitySerializer
     lookup_field = 'pk'
+
+class ActivityUploadFileView(CreateAPIView):
+    queryset = Activity_Attached_Files.objects.all()
+    serializer_class = ActivityFileSerializer
+    parser_classes = [MultiPartParser, FormParser]
+    
+class ActivityImportFileView(CreateAPIView):
+    queryset = Activity_Attached_Files.objects.all()
+    serializer_class = ActivityFileSerializer
+    parser_classes = [MultiPartParser, FormParser]
+    lookup_field = 'pk'
+    
+class ActivityDetachFileView(RetrieveUpdateDestroyAPIView):
+    queryset = Activity_Attached_Files.objects.all()
+    serializer_class = ActivityFileSerializer
+    lookup_field = 'pk'
+    
+
+    

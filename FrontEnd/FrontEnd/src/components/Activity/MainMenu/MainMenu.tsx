@@ -52,7 +52,8 @@ function MainMenu({ activities, selectedCourseId, onActivityCreated }: MainMenuP
                 due_date: dueDate,
                 course: selectedCourseId,
                 is_active: true,
-                lauched_at: new Date().toISOString()
+                lauched_at: new Date().toISOString(),
+                attached_files: []
             });
 
             onActivityCreated();

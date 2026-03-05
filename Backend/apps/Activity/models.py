@@ -21,3 +21,16 @@ class Activity(models.Model):
         verbose_name = 'Activity'
         verbose_name_plural = 'Activities'
         db_table = 'Activity'
+        
+class Activity_Attached_Files(models.Model):
+    attached_files_id = models.UUIDField(primary_key=True, default=uuid4, editable=False, db_column='attached_files_PK')
+    file = models.FileField(upload_to='activity_files/', db_column='file')
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='attached_files', db_column='attached_files_activity_FK')
+    
+    def __str__(self):
+        return f"File for {self.activity.name}"
+    
+    class Meta:
+        verbose_name = 'Attached File'
+        verbose_name_plural = 'Attached Files'
+        db_table = 'Attached_Files'
