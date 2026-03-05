@@ -28,6 +28,9 @@ class ActivityDetailView(RetrieveUpdateDestroyAPIView):
 class ActivityCreateView(CreateAPIView):
     queryset = Activity.objects.all()
     serializer_class = ActivitySerializer
+    
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 class ActivityUpdateView(RetrieveUpdateDestroyAPIView):
     queryset = Activity.objects.all()
