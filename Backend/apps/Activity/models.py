@@ -3,6 +3,12 @@ from django.db import models
 from uuid import uuid4
 
 class Activity(models.Model):
+    class ActivityType(models.TextChoices):
+        ATV = 'ATV', 'Activity'
+        LAB = 'LAB', 'Lab'
+        PRJ = 'PRJ', 'Project'
+        TST = 'TST', 'Test'
+        
     activity_id = models.UUIDField(primary_key=True, default=uuid4, editable=False, db_column='activity_PK')
     name = models.CharField(max_length=255, db_column='activity_name')
     total_grade = models.FloatField(db_column='activity_total_grade')
@@ -13,6 +19,7 @@ class Activity(models.Model):
     description = models.TextField(db_column='activity_description')
     is_active = models.BooleanField(default=True, db_column='activity_is_active')
     course = models.ForeignKey('Course.Course', on_delete=models.CASCADE, related_name='activities', db_column='activity_course_FK')
+    activity_type = models.CharField(max_length=3, choices=ActivityType.choices, db_column='activity_type')
     
     def __str__(self):
         return self.name

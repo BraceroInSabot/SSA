@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'apps.AuthUser',
     'apps.Course',
     'apps.Activity',
+    'apps.Question',
     'corsheaders',
 ]
 
