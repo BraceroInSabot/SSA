@@ -191,6 +191,19 @@ function SingleActivity() {
                         </div>
 
                         <div>
+                            {user?.is_student && activity.has_submission && activity.is_active && (
+                                <div className="mt-10 pt-6 border-t border-gray-200 flex justify-end">
+                                    <button 
+                                        onClick={() => navigate(`/atividade/${activity.activity_id}/responder`)}
+                                        className="btn bg-[#621708] hover:bg-black text-white border-none px-12 py-3 h-auto text-lg shadow-lg transition-transform hover:scale-105"
+                                    >
+                                        Acessar e Responder Atividade
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
                             <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Arquivos Anexos</h3>
                             
                             {(!activity.attached_files || activity.attached_files.length === 0) ? (
