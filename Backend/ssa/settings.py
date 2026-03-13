@@ -21,7 +21,7 @@ SECRET_KEY = config('SECRET_KEY', default='', cast=str)
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = [
-    '*.bracero.com.br',
+    'apissa.bracero.com.br',
 ]
 
 if DEBUG:
@@ -105,12 +105,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ssa.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+import os
+
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv('DB_NAME', 'NonEnv'),
+            "USER": os.getenv('DB_USER', 'NonEnv'),
+            "PASSWORD": os.getenv('DB_PASSWORD', 'NonEnv'),
+            "HOST": "db",
+            "PORT": 5432,
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
