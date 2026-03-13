@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { type Activity } from '../../../types/Activity';
 import ActivityCard from '../../ActivityCard/ActivityCard';
-import CreateActivityModal from '../../CreateActivityModal/CreateActivityModal';
 
 interface MainMenuProps {
     activities: Activity[];
@@ -10,15 +9,21 @@ interface MainMenuProps {
     onActivityCreated: () => void;
 }
 
-export default function MainMenu({ activities, selectedCourseId, onActivityCreated }: MainMenuProps) {
+export default function MainMenu({ activities, selectedCourseId }: MainMenuProps) {
     const { user } = useAuth();
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const navigate = useNavigate();
+
+    const handleStartNewActivity = () => {
+        if (!selectedCourseId) return;
+        // Navega para o editor enviando o courseId no state
+        navigate('/atividade/novo', { state: { courseId: selectedCourseId } });
+    };
 
     if (!selectedCourseId) {
         return (
             <main className="w-full lg:w-3/4 flex flex-col gap-4">
                 <div className="card bg-white shadow-sm border border-gray-200 p-6 text-center text-gray-500">
-                    Selecione um curso para ver ou criar atividades.
+                    Selecione um curso para gerenciar atividades.
                 </div>
             </main>
         );
@@ -32,8 +37,8 @@ export default function MainMenu({ activities, selectedCourseId, onActivityCreat
                 {user?.is_teacher && (
                     <button 
                         type="button" 
-                        onClick={() => setIsModalOpen(true)} 
-                        className="cursor-pointer bg-[#621708] hover:bg-red-900 transition-colors flex items-center justify-center text-white font-bold py-1 px-3 rounded text-sm"
+                        onClick={handleStartNewActivity}
+                        className="bg-[#621708] hover:bg-black transition-colors text-white font-bold py-2 px-4 rounded shadow-md"
                     >
                         Criar Atividade
                     </button>
@@ -42,20 +47,15 @@ export default function MainMenu({ activities, selectedCourseId, onActivityCreat
 
             {activities.length === 0 ? (
                 <div className="card bg-white shadow-sm border border-gray-200 p-6 text-center text-gray-500">
-                    Nenhuma atividade encontrada para este curso.
+                    Nenhuma atividade publicada ou rascunho disponível.
                 </div>
             ) : (
-                activities.map((activity) => (
-                    <ActivityCard key={activity.activity_id} activity={activity} />
-                ))
+                <div className="flex flex-col gap-3">
+                    {activities.map((activity) => (
+                        <ActivityCard key={activity.activity_id} activity={activity} />
+                    ))}
+                </div>
             )}
-
-            <CreateActivityModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)}
-                selectedCourseId={selectedCourseId}
-                onSuccess={onActivityCreated}
-            />
         </main>
     );
 }

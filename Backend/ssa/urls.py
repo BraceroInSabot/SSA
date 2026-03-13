@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/user/', include('apps.AuthUser.urls')),
     path('api/course/', include('apps.Course.urls')),
     path('api/activity/', include('apps.Activity.urls')),
+    path('api/question/', include('apps.Question.urls'))
 ]
 
 if settings.DEBUG:

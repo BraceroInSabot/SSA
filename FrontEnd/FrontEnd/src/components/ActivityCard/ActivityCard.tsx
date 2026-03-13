@@ -41,7 +41,7 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
                     </span>
 
                     <button 
-                        onClick={() => navigate(`/atividade/${activity.activity_id}`)}
+                        onClick={() => navigate(`/atividade/consulta/${activity.activity_id}`)}
                         className="btn btn-ghost btn-circle btn-sm text-gray-500 hover:bg-gray-100 transition-colors"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-5 h-5 stroke-current">
