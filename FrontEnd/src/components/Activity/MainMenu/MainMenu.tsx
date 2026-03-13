@@ -15,7 +15,6 @@ export default function MainMenu({ activities, selectedCourseId }: MainMenuProps
 
     const handleStartNewActivity = () => {
         if (!selectedCourseId) return;
-        // Navega para o editor enviando o courseId no state
         navigate('/atividade/novo', { state: { courseId: selectedCourseId } });
     };
 
