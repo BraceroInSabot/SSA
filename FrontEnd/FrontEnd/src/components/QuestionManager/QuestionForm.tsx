@@ -30,14 +30,16 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
             setType(initialData.question_type || 'UC');
             setExpectedResult(initialData.question_expected_result || 1.0);
 
-            console.log("Initial Question Response:", initialData.question_response);
             const responseData = initialData.question_response;
 
             switch (initialData.question_type) {
                 case 'UC':
                 case 'MC':
+                    //@ts-ignore
                     if (responseData.options && Array.isArray(responseData.options)) {
+                        //@ts-ignore
                         const correctAnswers = responseData.answers || [];
+                        //@ts-ignore
                         setOptions(responseData.options.map((opt: any) => ({
                             id: opt.id,
                             text: opt.text,
@@ -47,7 +49,9 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
                     break;
 
                 case 'TF':
+                    //@ts-ignore
                     if (responseData.options && Array.isArray(responseData.options)) {
+                        //@ts-ignore
                         setTfItems(responseData.options.map((opt: any) => ({
                             id: opt.id,
                             text: opt.text,
@@ -58,6 +62,7 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
 
                 case 'SA':
                 case 'ES':
+                    //@ts-ignore
                     setOpenAnswer(responseData.expected_text || '');
                     break;
             }

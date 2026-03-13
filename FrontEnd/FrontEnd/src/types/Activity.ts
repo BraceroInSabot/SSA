@@ -16,6 +16,7 @@ interface Activity {
     is_active: boolean;
     course: string; // course ID
     attached_files: AttachedFile[];
+    status: 'DRAFT' | 'PUB' | 'ARC';
 }
 
 interface QuestionOption {

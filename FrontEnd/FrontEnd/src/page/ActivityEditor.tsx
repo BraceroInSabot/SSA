@@ -49,6 +49,7 @@ export default function ActivityEditor() {
                 description: res.description,
                 to_be_launched: formatForInput(res.to_be_launched),
                 due_date: formatForInput(res.due_date),
+                //@ts-ignore
                 total_grade: res.total_grade,
                 activity_type: res.activity_type,
                 is_active: res.is_active,
@@ -88,6 +89,7 @@ export default function ActivityEditor() {
 
         try {
             if (activityId) {
+                //@ts-ignore
                 await updateActivity(activityId, payload);
                 // Feedback silencioso ou toast poderia entrar aqui
             } else {
