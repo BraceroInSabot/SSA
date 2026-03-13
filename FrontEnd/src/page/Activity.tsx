@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import NavBar from "../components/NavBar/NavBar";
 import { useAuth } from '../contexts/AuthContext';
-import { retrieveActivity, updateActivity, uploadActivityFile, detachActivityFile } from '../services/ActivityCrud';
+import { retrieveActivity, uploadActivityFile, detachActivityFile } from '../services/ActivityCrud';
 import { type Activity } from '../types/Activity';
 
 function SingleActivity() {
@@ -12,21 +12,9 @@ function SingleActivity() {
     
     const [activity, setActivity] = useState<Activity | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    
-    const editModalRef = useRef<HTMLDialogElement>(null);
-    const [editForm, setEditForm] = useState({
-        name: '',
-        description: '',
-        total_grade: 0,
-        has_submission: true,
-        to_be_launched: '',
-        due_date: '',
-        is_active: true
-    });
 
     const fetchActivityDetails = async () => {
         if (!id) return;
@@ -56,47 +44,6 @@ function SingleActivity() {
             hour: '2-digit',
             minute: '2-digit'
         });
-    };
-
-    const formatForInput = (isoString: string) => {
-        if (!isoString) return '';
-        const date = new Date(isoString);
-        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    };
-
-    const openEditModal = () => {
-        if (activity) {
-            setEditForm({
-                name: activity.name,
-                description: activity.description,
-                total_grade: Number(activity.total_grade),
-                has_submission: activity.has_submission,
-                to_be_launched: formatForInput(activity.to_be_launched),
-                due_date: formatForInput(activity.due_date),
-                is_active: activity.is_active
-            });
-        }
-        editModalRef.current?.showModal();
-    };
-
-    const closeEditModal = () => {
-        editModalRef.current?.close();
-    };
-
-    const handleEditSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!id) return;
-
-        setIsSaving(true);
-        try {
-            await updateActivity(id, editForm);
-            await fetchActivityDetails();
-            closeEditModal();
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsSaving(false);
-        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,10 +145,10 @@ function SingleActivity() {
 
                         {user?.is_teacher && (
                             <button 
-                                onClick={openEditModal}
-                                className="btn bg-[#F6AA1C] hover:bg-yellow-600 text-white border-none shrink-0"
+                                onClick={() => navigate(`/atividade/editar/${activity.activity_id}`, { state: { courseId: activity.course } })}
+                                className="btn bg-[#F6AA1C] hover:bg-yellow-600 text-white border-none shrink-0 shadow-md"
                             >
-                                Editar Atividade
+                                Editar Atividade e Questões
                             </button>
                         )}
                     </div>
@@ -241,6 +188,19 @@ function SingleActivity() {
                             <div className="prose max-w-none text-gray-600 leading-relaxed whitespace-pre-wrap">
                                 {activity.description}
                             </div>
+                        </div>
+
+                        <div>
+                            {user?.is_student && activity.has_submission && activity.is_active && (
+                                <div className="mt-10 pt-6 border-t border-gray-200 flex justify-end">
+                                    <button 
+                                        onClick={() => navigate(`/atividade/${activity.activity_id}/responder`)}
+                                        className="btn bg-[#621708] hover:bg-black text-white border-none px-12 py-3 h-auto text-lg shadow-lg transition-transform hover:scale-105"
+                                    >
+                                        Acessar e Responder Atividade
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div>
@@ -315,127 +275,6 @@ function SingleActivity() {
                         )}
                     </div>
                 </div>
-
-                <dialog ref={editModalRef} className="modal text-gray-800">
-                    <div className="modal-box bg-white max-w-2xl">
-                        <h3 className="font-bold text-lg mb-6">Editar Atividade</h3>
-                        
-                        <form onSubmit={handleEditSubmit} className="flex flex-col gap-4">
-                            <div>
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">Nome da Atividade</span>
-                                </label>
-                                <input 
-                                    type="text" 
-                                    value={editForm.name}
-                                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                                    className="input input-bordered w-full bg-gray-50" 
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">Descrição</span>
-                                </label>
-                                <textarea 
-                                    value={editForm.description}
-                                    onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                                    className="textarea textarea-bordered w-full bg-gray-50 h-24" 
-                                    required
-                                />
-                            </div>
-
-                            <div className="flex gap-4">
-                                <div className="flex-1">
-                                    <label className="label">
-                                        <span className="label-text font-medium text-gray-700">Nota Total</span>
-                                    </label>
-                                    <input 
-                                        type="number" 
-                                        step="0.1"
-                                        value={editForm.total_grade}
-                                        onChange={(e) => setEditForm({...editForm, total_grade: Number(e.target.value)})}
-                                        className="input input-bordered w-full bg-gray-50" 
-                                        required
-                                    />
-                                </div>
-
-                                <div className="flex-1 flex items-center mt-8 gap-6">
-                                    <label className="cursor-pointer label gap-2">
-                                        <span className="label-text font-medium text-gray-700">Exige Envio?</span>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={editForm.has_submission}
-                                            onChange={(e) => setEditForm({...editForm, has_submission: e.target.checked})}
-                                            className="checkbox checkbox-primary" 
-                                        />
-                                    </label>
-
-                                    <label className="cursor-pointer label gap-2">
-                                        <span className="label-text font-medium text-gray-700">Ativa?</span>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={editForm.is_active}
-                                            onChange={(e) => setEditForm({...editForm, is_active: e.target.checked})}
-                                            className="checkbox checkbox-success" 
-                                        />
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-4">
-                                <div className="flex-1">
-                                    <label className="label">
-                                        <span className="label-text font-medium text-gray-700">Data de Lançamento</span>
-                                    </label>
-                                    <input 
-                                        type="datetime-local" 
-                                        value={editForm.to_be_launched}
-                                        onChange={(e) => setEditForm({...editForm, to_be_launched: e.target.value})}
-                                        className="input input-bordered w-full bg-gray-50" 
-                                        required
-                                    />
-                                </div>
-
-                                <div className="flex-1">
-                                    <label className="label">
-                                        <span className="label-text font-medium text-gray-700">Data de Entrega</span>
-                                    </label>
-                                    <input 
-                                        type="datetime-local" 
-                                        value={editForm.due_date}
-                                        onChange={(e) => setEditForm({...editForm, due_date: e.target.value})}
-                                        className="input input-bordered w-full bg-gray-50" 
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="modal-action mt-6">
-                                <button 
-                                    type="button" 
-                                    onClick={closeEditModal} 
-                                    className="btn btn-ghost"
-                                    disabled={isSaving}
-                                >
-                                    Cancelar
-                                </button>
-                                <button 
-                                    type="submit" 
-                                    className="btn bg-[#F6AA1C] hover:bg-yellow-600 text-white border-none"
-                                    disabled={isSaving}
-                                >
-                                    {isSaving ? 'Salvando...' : 'Salvar Alterações'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <form method="dialog" className="modal-backdrop">
-                        <button onClick={closeEditModal}>close</button>
-                    </form>
-                </dialog>
             </main>
         </div>
     );

@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -43,7 +45,9 @@ INSTALLED_APPS = [
     'apps.AuthUser',
     'apps.Course',
     'apps.Activity',
+    'apps.Question',
     'corsheaders',
+    'simple_history',
 ]
 
 AUTH_USER_MODEL = 'AuthUser.AuthUser'
@@ -52,6 +56,13 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    
+    "ROTATE_REFRESH_TOKENS": True, 
 }
 
 MIDDLEWARE = [
@@ -155,3 +166,15 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    'limpar-rascunhos-abandonados-meia-noite': {
+        'task': 'apps.Activity.tasks.run_clean_drafts',
+        'schedule': crontab(minute=0, hour=0),
+    },
+}

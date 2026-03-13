@@ -5,7 +5,13 @@ from apps.Activity.serializer import ActivitySerializer, ActivityFileSerializer
 from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from django.shortcuts import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
+from django.db.models import Sum
+from apps.Activity.models import Activity
 
 class ActivityListView(ListAPIView):
     serializer_class = ActivitySerializer
@@ -53,5 +59,30 @@ class ActivityDetachFileView(RetrieveUpdateDestroyAPIView):
     serializer_class = ActivityFileSerializer
     lookup_field = 'pk'
     
+class ActivityPublishView(APIView):
+    def patch(self, request, pk, *args, **kwargs):
+        """
+        Transita a atividade de DRAFT para PUBLISHED garantindo a integridade dos dados.
+        """
+        activity = get_object_or_404(Activity, pk=pk)
 
-    
+        if activity.status == Activity.ActivityStatus.PUBLISHED:
+            raise ValidationError({"detail": "Esta atividade já encontra-se publicada."})
+
+        if activity.activity_type == Activity.ActivityType.TST:
+            if not activity.questions.exists(): # type: ignore
+                raise ValidationError({"detail": "Um teste não pode ser publicado sem questões."})
+            
+            total_pesos = activity.questions.aggregate(Sum('question_expected_result'))['question_expected_result__sum'] or 0 # type: ignore
+            if total_pesos != activity.total_grade:
+                 raise ValidationError({
+                    "detail": f"A soma dos pesos das questões ({total_pesos}) difere da nota total ({activity.total_grade})."
+                })
+
+        activity.status = Activity.ActivityStatus.PUBLISHED
+        activity.save()
+
+        return Response({
+            "detail": "Atividade publicada.", 
+            "status": activity.status
+        }, status=status.HTTP_200_OK)
