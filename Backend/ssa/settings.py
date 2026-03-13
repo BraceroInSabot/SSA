@@ -21,12 +21,14 @@ SECRET_KEY = config('SECRET_KEY', default='', cast=str)
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = [
-    'api.ssa.bracero.com.br',
-    'ssa.bracero.com.br',
-    'localhost',
-    'www.ssa.bracero.com.br',
-    '127.0.0.1',
+    '*.bracero.com.br',
 ]
+
+if DEBUG:
+    ALLOWED_HOSTS += [
+        'localhost',
+        '127.0.0.1',
+    ]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -65,7 +67,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "https://ssa.bracero.com.br",
-    "https://api.ssa.bracero.com.br",
+    "https://apissa.bracero.com.br",
 ]
 
 if DEBUG:
@@ -79,7 +81,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://ssa.bracero.com.br",
-    "https://api.ssa.bracero.com.br",
+    "https://apissa.bracero.com.br",
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
