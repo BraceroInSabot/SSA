@@ -70,10 +70,10 @@ class ActivityPublishView(APIView):
             raise ValidationError({"detail": "Esta atividade já encontra-se publicada."})
 
         if activity.activity_type == Activity.ActivityType.TST:
-            if not activity.questions.exists():
+            if not activity.questions.exists(): # type: ignore
                 raise ValidationError({"detail": "Um teste não pode ser publicado sem questões."})
             
-            total_pesos = activity.questions.aggregate(Sum('question_expected_result'))['question_expected_result__sum'] or 0
+            total_pesos = activity.questions.aggregate(Sum('question_expected_result'))['question_expected_result__sum'] or 0 # type: ignore
             if total_pesos != activity.total_grade:
                  raise ValidationError({
                     "detail": f"A soma dos pesos das questões ({total_pesos}) difere da nota total ({activity.total_grade})."
