@@ -80,7 +80,7 @@ export default function SingleActivity() {
 
     const calculateTotalGrade = () => {
         if (!activity?.teacher_submission || !Array.isArray(activity.teacher_submission)) return 0;
-        return activity.teacher_submission.reduce((sum, sub) => sum + (Number(sub.activity_final_grade) || 0), 0);
+        return activity.teacher_submission.reduce((sum, sub: any) => sum + (Number(sub.activity_final_grade) || 0), 0);
     };
 
     // --- PARSERS DE RESPOSTA E GABARITO ---

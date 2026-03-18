@@ -7,7 +7,7 @@ interface Activity {
     activity_id: string;
     name: string;
     activity_type: 'EXERCISE' | 'TEST' | 'PROJECT';
-    total_grade: Number;
+    total_grade: number;
     has_submission: boolean
     to_be_launched: string; // ISO string
     lauched_at: string; // ISO string
