@@ -16,7 +16,7 @@ export default function QuestionManager({ activityId }: QuestionManagerProps) {
     const fetchQuestions = async () => {
         setIsLoading(true);
         try {
-            const response = await api.get(`/activity/${activityId}/questions/`);
+            const response = await api.get(`/activity/${activityId}/questions/response/`);
             setQuestions(response.data);
         } catch (error) {
             console.error("Erro ao carregar questões:", error);

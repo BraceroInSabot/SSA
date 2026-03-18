@@ -3,6 +3,8 @@ import Login from '../page/Login';
 import Activities from '../page/Activities';
 import SingleActivity from '../page/Activity';
 import ActivityEditor from '../page/ActivityEditor';
+import ActivityResponder from '../page/ActivityResponder';
+import ActivityEvaluator from '../page/ActivityEvaluator';
 
 const router = createBrowserRouter([
   {
@@ -24,7 +26,15 @@ const router = createBrowserRouter([
   {
     path: '/atividade/editar/:id', // <-- Rota para editar questões de algo existente
     element: <ActivityEditor />,
-  }
+  },
+  {
+    path: '/atividade/:id/responder',
+    element: <ActivityResponder />,
+  },
+  {
+    path: '/atividade/:id/avaliar',
+    element: <ActivityEvaluator />,
+  },
 ]);
 
 export default router;

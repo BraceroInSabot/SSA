@@ -17,6 +17,8 @@ interface Activity {
     course: string; // course ID
     attached_files: AttachedFile[];
     status: 'DRAFT' | 'PUB' | 'ARC';
+    has_student_submission: boolean;
+    teacher_submission: []
 }
 
 interface QuestionOption {
@@ -28,10 +30,11 @@ interface QuestionOption {
 interface QuestionDefinition {
     question_id?: string;
     question_description: string;
-    question_type: 'MC' | 'UC' | 'TF' | 'SA' | 'ES';
+    question_type: 'MC' | 'UC' | 'TF' | 'SA' | 'ES' | 'FL';
     question_expected_result: number;
     options_payload: QuestionOption[];
-    question_response: string;
+    question_response?: any;
+    question_options?: any;
 
 }
 

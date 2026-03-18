@@ -30,39 +30,39 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
             setType(initialData.question_type || 'UC');
             setExpectedResult(initialData.question_expected_result || 1.0);
 
-            const responseData = initialData.question_response;
+            // DESERIALIZAÇÃO SEPARADA: Lendo os textos de options e as respostas de response
+            const responseData = initialData.question_response || {};
+            const optionsData = initialData.question_options || [];
 
             switch (initialData.question_type) {
                 case 'UC':
                 case 'MC':
-                    //@ts-ignore
-                    if (responseData.options && Array.isArray(responseData.options)) {
-                        //@ts-ignore
+                    if (Array.isArray(optionsData) && optionsData.length > 0) {
                         const correctAnswers = responseData.answers || [];
-                        //@ts-ignore
-                        setOptions(responseData.options.map((opt: any) => ({
+                        setOptions(optionsData.map((opt: any) => ({
                             id: opt.id,
                             text: opt.text,
-                            isCorrect: correctAnswers.includes(opt.id)
+                            // Suporta tanto array de respostas (MC) quanto string única (UC legadas)
+                            isCorrect: Array.isArray(correctAnswers) 
+                                ? correctAnswers.includes(opt.id) 
+                                : correctAnswers === opt.id
                         })));
                     }
                     break;
 
                 case 'TF':
-                    //@ts-ignore
-                    if (responseData.options && Array.isArray(responseData.options)) {
-                        //@ts-ignore
-                        setTfItems(responseData.options.map((opt: any) => ({
+                    if (Array.isArray(optionsData) && optionsData.length > 0) {
+                        const tfAnswers = responseData.answers || {};
+                        setTfItems(optionsData.map((opt: any) => ({
                             id: opt.id,
                             text: opt.text,
-                            isTrue: opt.isTrue
+                            isTrue: tfAnswers[opt.id] !== false
                         })));
                     }
                     break;
 
                 case 'SA':
                 case 'ES':
-                    //@ts-ignore
                     setOpenAnswer(responseData.expected_text || '');
                     break;
             }
@@ -99,32 +99,32 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
     const updateTfText = (index: number, text: string) => setTfItems(tfItems.map((item, i) => i === index ? { ...item, text } : item));
     const setTfValue = (index: number, isTrue: boolean) => setTfItems(tfItems.map((item, i) => i === index ? { ...item, isTrue } : item));
 
-    // --- SERIALIZAÇÃO: Construindo o JSON unificado para o Backend ---
+    // --- SERIALIZAÇÃO: Dividindo o Payload ---
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
         let questionResponseJson: any = {};
+        let questionOptionsJson: any = [];
 
         switch (type) {
             case 'UC':
-                questionResponseJson = {
-                    answers: [options.find(o => o.isCorrect)?.id || 'A'],
-                    options: options.map(o => ({ id: o.id, text: o.text }))
-                };
+                questionOptionsJson = options.map(o => ({ id: o.id, text: o.text }));
+                questionResponseJson = { answers: [options.find(o => o.isCorrect)?.id || 'A'] };
                 break;
             case 'MC':
-                questionResponseJson = {
-                    answers: options.filter(o => o.isCorrect).map(o => o.id),
-                    options: options.map(o => ({ id: o.id, text: o.text }))
-                };
+                questionOptionsJson = options.map(o => ({ id: o.id, text: o.text }));
+                questionResponseJson = { answers: options.filter(o => o.isCorrect).map(o => o.id) };
                 break;
             case 'TF':
-                questionResponseJson = {
-                    options: tfItems.map(item => ({ id: item.id, text: item.text, isTrue: item.isTrue }))
-                };
+                questionOptionsJson = tfItems.map(item => ({ id: item.id, text: item.text }));
+                const tfAnswers: Record<string, boolean> = {};
+                tfItems.forEach(item => { tfAnswers[item.id] = item.isTrue; });
+                questionResponseJson = { answers: tfAnswers };
                 break;
             case 'SA':
             case 'ES':
-                questionResponseJson = { expected_text: openAnswer };
+                questionOptionsJson = []; // Sem alternativas para o aluno escolher
+                questionResponseJson = { expected_text: openAnswer }; // Espelho de correção
                 break;
         }
 
@@ -132,7 +132,8 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
             question_description: description,
             question_type: type,
             question_expected_result: expectedResult,
-            question_response: questionResponseJson
+            question_options: questionOptionsJson,   // Vai para os olhos do aluno
+            question_response: questionResponseJson  // Vai para o motor de correção
         });
         
         if (!initialData) resetForm();
