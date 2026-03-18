@@ -2,8 +2,6 @@ services:
   db:
     image: postgres:15-alpine
     restart: always
-    ports:
-      - "5432:5432"
     env_file:
       - .env
     environment:
@@ -20,7 +18,7 @@ services:
       sh -c "
       python manage.py migrate --noinput &&
       DJANGO_SUPERUSER_PASSWORD=$$SYS_PASSWORD DJANGO_SUPERUSER_NAME=$$SYS_NAME python manage.py createsuperuser --noinput --email $$SYS_EMAIL || true &&
-      gunicorn ssa.wsgi:application --bind 0.0.0.0:8000
+      gunicorn ssa.wsgi:application --bind 0.0.0.0:8000 -w 5
       "
     env_file:
       - .env
