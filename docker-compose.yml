@@ -33,7 +33,7 @@ services:
       - media_data:/app/media
 
   frontend:
-    build: ./Frontend
+    build: ./FrontEnd
     restart: always
     depends_on:
       - backend
