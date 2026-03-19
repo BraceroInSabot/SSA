@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - /opt/ssa/database:/var/lib/postgresql/data
 
   backend:
     build: ./Backend
@@ -30,7 +30,7 @@ services:
     depends_on:
       - db
     volumes:
-      - media_data:/app/media
+      - /opt/ssa/media:/app/media
 
   frontend:
     build: ./FrontEnd
@@ -49,7 +49,3 @@ services:
     depends_on:
       - frontend
       - backend
-
-volumes:
-  postgres_data:
-  media_data:
