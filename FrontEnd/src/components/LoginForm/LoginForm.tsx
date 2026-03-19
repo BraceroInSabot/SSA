@@ -20,7 +20,7 @@ function LoginForm() {
 
         try {
             const data = await loginUser(email, password);
-            login(data.access, data.refresh); 
+            login(data.access); 
 
             if (data.access && data.refresh) {
                 navigate('/atividades');
