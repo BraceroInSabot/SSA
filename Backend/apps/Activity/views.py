@@ -27,7 +27,11 @@ class ActivityListView(ListAPIView):
     serializer_class = ActivitySerializer
     
     def get_queryset(self):
-        queryset = Activity.objects.filter(is_active=True)
+        if self.request.user.is_anonymous or self.request.user.is_student: # type: ignore
+            queryset = Activity.objects.filter(status=Activity.ActivityStatus.PUBLISHED)
+        elif self.request.user.is_teacher: # type: ignore
+            queryset = Activity.objects.all()
+            
         course_id = self.request.query_params.get('course_id') # type: ignore
         
         if course_id:

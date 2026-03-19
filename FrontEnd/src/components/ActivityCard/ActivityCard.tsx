@@ -1,13 +1,21 @@
 import { useNavigate } from 'react-router-dom';
 import { type Activity } from '../../types/Activity';
 import { formatDateTime } from '../../utils/DateFormatter';
+import { useEffect, useState } from 'react';
 
 interface ActivityCardProps {
     activity: Activity;
 }
 
 export default function ActivityCard({ activity }: ActivityCardProps) {
+    const [isDraft, setIsDraft] = useState(false);
+    const [isValid, setIsValid] = useState(true);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        new Date(activity.due_date) < new Date() ? setIsValid(false) : setIsValid(true);
+        activity.status === 'DRF' ? setIsDraft(true) : setIsDraft(false);
+    }, [isValid])
 
     return (
         <div className="card bg-white shadow-sm border border-gray-200">
@@ -36,8 +44,18 @@ export default function ActivityCard({ activity }: ActivityCardProps) {
                         </span>
                     </div>
 
-                    <span className={`badge border-none ${activity.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {activity.is_active ? 'Ativa' : 'Inativa'}
+                    <span className={`badge border-none 
+                        ${
+                            isDraft ? 'bg-yellow-100 text-yellow-800' :
+                            !isValid ? 'bg-red-100 text-red-800' : 
+                            activity.is_active ? 'bg-green-100 text-green-800' : 
+                            'bg-gray-100 text-gray-800'}
+                        `}>
+                        {
+                            isDraft ? 'Não publicada' :
+                            new Date(activity.due_date) < new Date() ? 'Vencida' :
+                            activity.is_active ? 'Ativa' : 'Inativa'
+                        }
                     </span>
 
                     <button 
