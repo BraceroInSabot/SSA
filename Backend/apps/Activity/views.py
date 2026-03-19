@@ -29,12 +29,10 @@ class ActivityListView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         
-        if user.is_anonymous or getattr(user, 'is_student', False):
-            queryset = Activity.objects.filter(status=Activity.ActivityStatus.PUBLISHED)
-        elif getattr(user, 'is_teacher', False):
+        queryset = Activity.objects.filter(status=Activity.ActivityStatus.PUBLISHED)
+        
+        if user.is_teacher:
             queryset = Activity.objects.all()
-        else:
-            return Activity.objects.none()
             
         course_id = self.request.query_params.get('course_id')  # type: ignore
         
