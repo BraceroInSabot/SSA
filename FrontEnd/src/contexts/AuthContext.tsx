@@ -1,70 +1,80 @@
-import { createContext, useState, useEffect, type ReactNode, useContext } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { api } from '../services/api';
 
-// Defina o formato exato do que vem dentro do token do Django
-interface DecodedToken {
-    user_id: string;
+// Defina a tipagem real do que vem do seu endpoint /user/info/
+interface User {
+    id: number | string;
     name: string;
     email: string;
-    is_teacher: boolean;
+    image: string | null;
     is_student: boolean;
-    exp: number;
+    is_teacher: boolean;
 }
 
 interface AuthContextType {
     isAuthenticated: boolean;
-    user: DecodedToken | null;
-    login: (token: string, refreshToken: string) => void;
+    user: User | null;
+    login: (token: string) => void;
     logout: () => void;
+    refreshUser: () => Promise<void>; // A função vital que você não tinha
 }
 
-export const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<DecodedToken | null>(null);
-    const isAuthenticated = !!user; // Se user existe, está logado
+export function AuthProvider({ children }: { children: ReactNode }) {
+    const [user, setUser] = useState<User | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isInitializing, setIsInitializing] = useState(true);
 
+    // Função que busca a verdade no backend
+    const refreshUser = async () => {
+        try {
+            const response = await api.get('/user/info/');
+            setUser(response.data);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.error("Token inválido ou expirado. Limpando sessão.");
+            logout();
+        }
+    };
+
+    // Hidrata o estado no primeiro carregamento (F5)
     useEffect(() => {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token'); // Ou cookie
         if (token) {
-            try {
-                const decoded = jwtDecode<DecodedToken>(token);
-                // Opcional: Verificar se o token já expirou lendo o decoded.exp
-                if (decoded.exp * 1000 > Date.now()) {
-                    setUser(decoded);
-                } else {
-                    logout(); // Token expirado, limpa tudo
-                }
-            } catch (error) {
-                logout(); // Token malformado
-            }
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            refreshUser().finally(() => setIsInitializing(false));
+        } else {
+            setIsInitializing(false);
         }
     }, []);
 
-    const login = (token: string, refreshToken: string) => {
-        localStorage.setItem('access_token', token);
-        localStorage.setItem('refresh_token', refreshToken);
-        const decoded = jwtDecode<DecodedToken>(token);
-        setUser(decoded);
+    const login = async (token: string) => {
+        localStorage.setItem('token', token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        await refreshUser(); // Imediatamente após o login, busca a foto e os dados
     };
 
     const logout = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('token');
+        delete api.defaults.headers.common['Authorization'];
         setUser(null);
+        setIsAuthenticated(false);
     };
 
+    if (isInitializing) {
+        return <div className="min-h-screen flex items-center justify-center">Carregando SSA...</div>; // Evita piscar a tela de login
+    }
+
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, user, login, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );
-};
+}
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth deve ser usado dentro de um AuthProvider");
-    }
+    if (!context) throw new Error('useAuth deve ser usado dentro de um AuthProvider');
     return context;
 };

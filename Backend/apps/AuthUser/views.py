@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
-from apps.AuthUser.serializer import CustomTokenObtainPairSerializer
+from apps.AuthUser.serializer import CustomTokenObtainPairSerializer, UpdateUserSerializer
 
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -32,8 +32,23 @@ class UserInfoView(APIView):
             'id': user.id,
             'name': user.name,
             'email': user.email,
+            'image': user.image.url if user.image else None,
             'is_student': user.is_student,
             'is_teacher': user.is_teacher
         }
         return Response(user_info)
     
+class UserUpdateView(APIView):
+    serializer_class = UpdateUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        serializer = self.serializer_class(
+            instance=request.user, 
+            data=request.data, 
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        return Response(serializer.data)

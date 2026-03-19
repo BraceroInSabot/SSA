@@ -5,6 +5,7 @@ import SingleActivity from '../page/Activity';
 import ActivityEditor from '../page/ActivityEditor';
 import ActivityResponder from '../page/ActivityResponder';
 import ActivityEvaluator from '../page/ActivityEvaluator';
+import ProfilePage from '../page/Profile';
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
     path: '/atividade/:id/avaliar',
     element: <ActivityEvaluator />,
   },
+  {
+    path: '/perfil',
+    element: <ProfilePage />,
+  }
 ]);
 
 export default router;

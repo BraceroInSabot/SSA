@@ -26,6 +26,7 @@ class AuthUser(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(default=uuid4, editable=False, primary_key=True, db_column='user_PK')
     name = models.CharField(max_length=255, db_column='user_name')
     email = models.EmailField(unique=True, db_column='user_email')
+    image = models.ImageField(upload_to='user_images/', null=True, blank=True, db_column='user_image')
     is_student = models.BooleanField(default=True, db_column='is_student')
     is_teacher = models.BooleanField(default=False, db_column='is_teacher')
     is_active = models.BooleanField(default=True, db_column='is_active')  
