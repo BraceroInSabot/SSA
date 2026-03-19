@@ -36,7 +36,7 @@ function NavBar() {
                                         src={
                                         user?.image 
                                             ? `${import.meta.env.VITE_MEDIA_URL || 'http://127.0.0.1:8000'}${user?.image}` 
-                                            : ''
+                                            : `https://ui-avatars.com/api/?name=${user?.name}&background=BC3908&color=fff&size=256&bold=true`
                                     }
                                         alt="Avatar do Usuário" 
                                     />

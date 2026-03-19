@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import NavBar from '../components/NavBar/NavBar';
 import { api } from '../services/api';
+// ATENÇÃO: Verifique se o caminho do seu AuthContext está correto
+import { useAuth } from '../contexts/AuthContext'; 
 
 interface UserProfile {
     id: string | number;
@@ -12,6 +14,8 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
+    const { refreshUser } = useAuth(); // Importação vital para manter a NavBar atualizada
+    
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -19,14 +23,16 @@ export default function ProfilePage() {
     const [isEditingEmail, setIsEditingEmail] = useState(false);
     const [isEditingPassword, setIsEditingPassword] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [isUploadingCSV, setIsUploadingCSV] = useState(false);
 
     // Estados Controlados dos Formulários
     const [newEmail, setNewEmail] = useState('');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
 
-    // Referência oculta para o input de arquivo
+    // Referências ocultas para os inputs de arquivo
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const csvInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchProfile();
@@ -58,6 +64,7 @@ export default function ProfilePage() {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             await fetchProfile();
+            if (refreshUser) await refreshUser(); // Sincroniza o estado global
         } catch (error) {
             alert("Erro ao fazer upload da imagem.");
         } finally {
@@ -77,6 +84,7 @@ export default function ProfilePage() {
         try {
             await api.patch('/user/update/', { email: newEmail });
             await fetchProfile();
+            if (refreshUser) await refreshUser(); // Sincroniza o estado global
             setIsEditingEmail(false);
             alert("E-mail alterado com sucesso.");
         } catch (error) {
@@ -90,7 +98,6 @@ export default function ProfilePage() {
         if (!currentPassword || !newPassword) return;
 
         try {
-            // Ajuste o payload abaixo caso o seu serializer exija chaves diferentes
             await api.patch('/user/update/', { 
                 current_password: currentPassword, 
                 new_password: newPassword 
@@ -100,7 +107,28 @@ export default function ProfilePage() {
             setNewPassword('');
             alert("Senha alterada com sucesso.");
         } catch (error) {
-            alert("Erro ao alterar a senha. Verifique se a senha atual está correta.");
+            alert("Erro ao alterar a senha. Verifique se a senha atual está correta ou se a nova senha atende aos requisitos.");
+        }
+    };
+
+    const handleCSVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploadingCSV(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await api.post('/user/import-students/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            alert(`Importação concluída: ${response.data.criados} alunos criados com sucesso.`);
+        } catch (error: any) {
+            alert(error.response?.data?.error || "Erro ao processar o arquivo CSV. Verifique a formatação.");
+        } finally {
+            setIsUploadingCSV(false);
+            if (csvInputRef.current) csvInputRef.current.value = '';
         }
     };
 
@@ -115,7 +143,7 @@ export default function ProfilePage() {
             <NavBar />
             
             <main className="flex-1 p-4 lg:p-10 max-w-4xl mx-auto w-full">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
                     
                     {/* CABEÇALHO DO PERFIL */}
                     <div className="bg-gradient-to-r from-[#BC3908] to-[#8a2905] px-8 py-10 flex flex-col items-center sm:flex-row sm:items-end gap-6 relative">
@@ -251,9 +279,39 @@ export default function ProfilePage() {
                                 )}
                             </div>
                         </div>
-                        
                     </div>
                 </div>
+
+                {/* BLOCO DE ADMINISTRAÇÃO: PROFESSOR */}
+                {profile.is_teacher && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                        <h2 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-4 mb-6">Administração: Importar Alunos</h2>
+                        
+                        <div className="p-5 bg-indigo-50 rounded-xl border border-indigo-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <span className="block text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Importação em Lote (CSV)</span>
+                                <p className="text-gray-700 text-sm">O arquivo deve conter os cabeçalhos exatos: <strong>Nome Completo; RA</strong> separados por ponto e vírgula.</p>
+                            </div>
+                            
+                            <div className="shrink-0">
+                                <button 
+                                    onClick={() => csvInputRef.current?.click()}
+                                    disabled={isUploadingCSV}
+                                    className="btn bg-[#621708] hover:bg-black text-white border-none shadow-md"
+                                >
+                                    {isUploadingCSV ? 'Processando...' : 'Carregar CSV'}
+                                </button>
+                                <input 
+                                    type="file" 
+                                    ref={csvInputRef} 
+                                    onChange={handleCSVUpload} 
+                                    accept=".csv" 
+                                    className="hidden" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
