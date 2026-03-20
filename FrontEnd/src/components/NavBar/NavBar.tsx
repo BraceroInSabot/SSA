@@ -34,10 +34,10 @@ function NavBar() {
                                 <div className="w-10 rounded-full border-2 border-[#F6AA1C] bg-white">
                                     <img 
                                         src={
-                                        user?.image 
-                                            ? `${import.meta.env.VITE_MEDIA_URL || 'http://127.0.0.1:8000'}${user?.image}` 
-                                            : `https://ui-avatars.com/api/?name=${user?.name}&background=BC3908&color=fff&size=256&bold=true`
-                                    }
+                                            user?.image 
+                                                ? user.image 
+                                                : `https://ui-avatars.com/api/?name=${user?.name}&background=BC3908&color=fff&size=256&bold=true`
+                                        }
                                         alt="Avatar do Usuário" 
                                     />
                                 </div>

@@ -151,9 +151,9 @@ export default function ProfilePage() {
                             <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white shadow-md">
                                 <img 
                                     src={
-                                        profile.image 
-                                            ? `${import.meta.env.VITE_MEDIA_URL || 'http://127.0.0.1:8000'}${profile.image}` 
-                                            : fallbackImage
+                                        profile?.image 
+                                            ? profile.image 
+                                            : `https://ui-avatars.com/api/?name=${profile?.name}&background=BC3908&color=fff&size=256&bold=true`
                                     }
                                     alt="Foto de Perfil" 
                                     className="w-full h-full object-cover"
