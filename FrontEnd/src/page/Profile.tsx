@@ -136,7 +136,6 @@ export default function ProfilePage() {
     if (!profile) return <div className="min-h-screen bg-[#F2F5F7] flex items-center justify-center">Erro ao carregar perfil.</div>;
 
     const userRole = profile.is_teacher ? 'Professor' : profile.is_student ? 'Aluno' : 'Usuário';
-    const fallbackImage = `https://ui-avatars.com/api/?name=${profile.name}&background=BC3908&color=fff&size=256&bold=true`;
 
     return (
         <div className="flex flex-col min-h-screen bg-[#F2F5F7]">
