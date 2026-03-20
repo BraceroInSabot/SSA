@@ -28,13 +28,16 @@ class ActivityListView(ListAPIView):
     
     def get_queryset(self):
         user = self.request.user
+        queryset = Activity.objects.none()
         
-        queryset = Activity.objects.filter(status=Activity.ActivityStatus.PUBLISHED)
-        
-        if user.is_teacher: # type: ignore
+        if getattr(user, 'is_teacher', False):
             queryset = Activity.objects.all()
+        elif getattr(user, 'is_student', False):
+            queryset = Activity.objects.filter(status=Activity.ActivityStatus.PUBLISHED)
+        else:
+            return queryset
             
-        course_id = self.request.query_params.get('course_id')  # type: ignore
+        course_id = self.request.query_params.get('course_id') # type: ignore
         
         if course_id:
             target_course = get_object_or_404(Course, pk=course_id, is_active=True)
