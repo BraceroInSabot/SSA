@@ -195,3 +195,8 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+AWS_QUERYSTRING_AUTH = True
+
+PUBLIC_MINIO_HOST = os.environ.get('PUBLIC_MINIO_HOST', 'localhost:9000')
+AWS_S3_CUSTOM_DOMAIN = f"{PUBLIC_MINIO_HOST}/{AWS_STORAGE_BUCKET_NAME}"
