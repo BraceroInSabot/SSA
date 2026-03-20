@@ -8,8 +8,19 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - /opt/ssa/database:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    volumes:
+      - /opt/ssa/minio_data:/data
 
   backend:
     build: ./Backend
@@ -27,10 +38,13 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${MINIO_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_PASSWORD}
+      - AWS_STORAGE_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
     depends_on:
       - db
-    volumes:
-      - /opt/ssa/media:/app/media
+      - minio
 
   frontend:
     build: ./FrontEnd

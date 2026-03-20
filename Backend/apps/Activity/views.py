@@ -31,7 +31,7 @@ class ActivityListView(ListAPIView):
         
         queryset = Activity.objects.filter(status=Activity.ActivityStatus.PUBLISHED)
         
-        if user.is_teacher:
+        if user.is_teacher: # type: ignore
             queryset = Activity.objects.all()
             
         course_id = self.request.query_params.get('course_id')  # type: ignore
