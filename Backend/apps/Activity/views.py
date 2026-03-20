@@ -32,7 +32,7 @@ class ActivityListView(ListAPIView):
         
         if getattr(user, 'is_teacher', False):
             queryset = Activity.objects.all()
-        elif getattr(user, 'is_student', False):
+        elif getattr(user, 'is_student', False) or user.is_anonymous:
             queryset = Activity.objects.filter(status=Activity.ActivityStatus.PUBLISHED)
         else:
             return queryset
