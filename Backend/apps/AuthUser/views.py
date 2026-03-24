@@ -17,6 +17,7 @@ from django.db import transaction
 from django.contrib.auth import get_user_model 
 User = get_user_model()
 from rest_framework.request import Request
+from .permissions import IsTeacher
 
 class LoginView(TokenObtainPairView):
     """Get user credential and return two JWT tokens (Access and Refresh) for stateless authentication."""
@@ -81,12 +82,12 @@ class UserUpdateView(APIView):
 
 
 class StudentImportView(APIView):
-    permission_classes = [IsAuthenticated]
+    """
+    Receive a csv file and read it to create students.
+    """
+    permission_classes = [IsAuthenticated, IsTeacher]
 
-    def post(self, request):
-        if not request.user.is_teacher:
-            return Response({"error": "Acesso negado. Apenas professores podem importar alunos."}, status=status.HTTP_403_FORBIDDEN)
-
+    def post(self, request):        
         csv_file = request.FILES.get('file')
         if not csv_file or not csv_file.name.endswith('.csv'):
             return Response({"error": "Por favor, envie um arquivo .csv válido."}, status=status.HTTP_400_BAD_REQUEST)
