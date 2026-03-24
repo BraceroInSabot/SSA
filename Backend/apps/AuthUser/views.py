@@ -23,7 +23,7 @@ class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 class LogoutView(APIView):
-    """Invalid the given att token, insert it into a blacklist and logoff his section."""
+    """Invalidate the given access/refresh token, insert it into a blacklist and terminate his section."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):

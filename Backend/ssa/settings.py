@@ -48,11 +48,13 @@ INSTALLED_APPS = [
     'apps.Question',
     'corsheaders',
     'simple_history',
+    'drf_spectacular',
 ]
 
 AUTH_USER_MODEL = 'AuthUser.AuthUser'
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
@@ -202,3 +204,10 @@ AWS_QUERYSTRING_AUTH = True
 
 PUBLIC_MINIO_HOST = os.environ.get('PUBLIC_MINIO_HOST', 'localhost:9000')
 AWS_S3_CUSTOM_DOMAIN = f"{PUBLIC_MINIO_HOST}/{AWS_STORAGE_BUCKET_NAME}"
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API do Sistema de Suporte ao Aluno (SSA)',
+    'DESCRIPTION': 'Documentação interativa dos endpoints REST.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
