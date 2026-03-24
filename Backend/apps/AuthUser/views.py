@@ -8,30 +8,43 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from apps.AuthUser.serializer import CustomTokenObtainPairSerializer, UpdateUserSerializer
 import csv
 import io
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from django.db import transaction
 from django.contrib.auth import get_user_model 
 User = get_user_model()
 
-
 class LoginView(TokenObtainPairView):
+    """Get user credential and return two JWT tokens (Access and Refresh) for stateless authentication."""
+    permission_classes = [AllowAny]
     serializer_class = CustomTokenObtainPairSerializer
-    pass
 
 class LogoutView(APIView):
+    """Invalid the given att token, insert it into a blacklist and logoff his section."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """Logout user."""
+        refresh_token = request.data.get("refresh")
+
+        if not refresh_token:
+            return Response(
+                {"detail": "O parâmetro 'refresh' é obrigatório no corpo da requisição. Faça a limpeza dos cookies do seu navegador e tente novamente."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
-            refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
             token.blacklist()
             return Response(status=status.HTTP_205_RESET_CONTENT)
-        except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except TokenError:
+            return Response(
+                {"detail": "Token inválido, corrompido ou já expirado. Faça a limpeza do cache do seu navegador e tente novamente."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
