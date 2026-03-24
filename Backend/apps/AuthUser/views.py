@@ -1,23 +1,26 @@
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from rest_framework_simplejwt.views import TokenObtainPairView
-from apps.AuthUser.serializer import CustomTokenObtainPairSerializer, UpdateUserSerializer, UserInfoSerializer
 import csv
 import io
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework import status
+
 from django.db import transaction
 from django.contrib.auth import get_user_model 
-User = get_user_model()
+
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+
+from apps.AuthUser.serializer import (
+    CustomTokenObtainPairSerializer, 
+    UpdateUserSerializer, 
+    UserInfoSerializer
+)
 from .permissions import IsTeacher
+
+User = get_user_model()
 
 class LoginView(TokenObtainPairView):
     """Get user credential and return two JWT tokens (Access and Refresh) for stateless authentication."""
