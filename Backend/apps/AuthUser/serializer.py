@@ -17,7 +17,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['is_student'] = user.is_student
 
         return token
-    
+
+class UserInfoSerializer(ModelSerializer):
+    class Meta:
+        model = AuthUser
+        fields = ['id', 'name', 'email', 'image', 'is_student', 'is_teacher']
+
 class UpdateUserSerializer(ModelSerializer):
     current_password = CharField(write_only=True, required=False)
     new_password = CharField(write_only=True, required=False)

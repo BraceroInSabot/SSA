@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
-from apps.AuthUser.serializer import CustomTokenObtainPairSerializer, UpdateUserSerializer
+from apps.AuthUser.serializer import CustomTokenObtainPairSerializer, UpdateUserSerializer, UserInfoSerializer
 import csv
 import io
 from rest_framework_simplejwt.exceptions import TokenError
@@ -47,19 +47,17 @@ class LogoutView(APIView):
             )
         
 class UserInfoView(APIView):
+    """
+    Retrieves the authenticated user's profile information.
+    """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        user = request.user
-        user_info = {
-            'id': user.id,
-            'name': user.name,
-            'email': user.email,
-            'image': user.image.url if user.image else None,
-            'is_student': user.is_student,
-            'is_teacher': user.is_teacher
-        }
-        return Response(user_info)
+    def get(self, request) -> Response:
+        serializer: UserInfoSerializer = UserInfoSerializer(
+            request.user, 
+            context={'request': request}
+        )
+        return Response(serializer.data)
     
 class UserUpdateView(APIView):
     serializer_class = UpdateUserSerializer
