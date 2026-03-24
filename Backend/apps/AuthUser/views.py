@@ -16,6 +16,7 @@ from rest_framework import status
 from django.db import transaction
 from django.contrib.auth import get_user_model 
 User = get_user_model()
+from rest_framework.request import Request
 
 class LoginView(TokenObtainPairView):
     """Get user credential and return two JWT tokens (Access and Refresh) for stateless authentication."""
@@ -60,14 +61,18 @@ class UserInfoView(APIView):
         return Response(serializer.data)
     
 class UserUpdateView(APIView):
+    """
+    Handles partial updates for the authenticated user's profile and credentials.
+    """
     serializer_class = UpdateUserSerializer
     permission_classes = [IsAuthenticated]
 
-    def patch(self, request):
-        serializer = self.serializer_class(
+    def patch(self, request: Request) -> Response:
+        serializer: UpdateUserSerializer = self.serializer_class(
             instance=request.user, 
             data=request.data, 
-            partial=True
+            partial=True,
+            context={'request': request} 
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
