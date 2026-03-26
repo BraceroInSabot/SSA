@@ -18,7 +18,7 @@ from apps.AuthUser.serializer import (
     UpdateUserSerializer, 
     UserInfoSerializer
 )
-from .permissions import IsTeacher
+from ..core.permissions import IsTeacher
 
 User = get_user_model()
 

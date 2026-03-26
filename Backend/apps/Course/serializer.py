@@ -6,3 +6,4 @@ class CourseSerializer(ModelSerializer):
         model = Course
         fields = '__all__'
         read_only_fields = ['id']
+        exclude_fields = ['color']

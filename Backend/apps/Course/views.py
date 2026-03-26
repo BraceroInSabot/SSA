@@ -1,17 +1,44 @@
 from django.shortcuts import render
-from apps.Course.models import Course
-from apps.Course.serializer import CourseSerializer
+from .models import Course
+from .serializer import CourseSerializer
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
 
-class CourseListView(ListAPIView):
-    queryset = Course.objects.filter(is_active=True)
-    serializer_class = CourseSerializer
+from django.db.models.query import QuerySet
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .models import Course
+from .serializer import CourseSerializer
+from ..core.permissions import IsTeacher
 
-class CourseDetailView(RetrieveAPIView):
-    queryset = Course.objects.all()
+class CourseViewSet(
+    CreateModelMixin,
+    RetrieveModelMixin,
+    ListModelMixin,
+    GenericViewSet
+):
+    """
+    Unified REST controller for the Course resource.
+    Exposes List (GET), Retrieve (GET /<pk>/), and Create (POST) operations.
+    """
     serializer_class = CourseSerializer
-    lookup_field = 'pk'
+    
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions required for the specific action.
+        - Public access for reading actions.
+        - Restricted access (Teacher only) for writing/mutating actions.
+        """
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated, IsTeacher]
+            
+        return [permission() for permission in permission_classes]
 
-class CourseCreateView(CreateAPIView):
-    queryset = Course.objects.all()
-    serializer_class = CourseSerializer
+    def get_queryset(self) -> QuerySet[Course]:
+        """
+        Enforces consistent data exposure across all HTTP actions, preventing IDOR vulnerabilities on inactive courses.
+        """
+        return Course.objects.filter(is_active=True)
+        
