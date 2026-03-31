@@ -1,32 +1,47 @@
-from django.shortcuts import render
-from .models import Activity, Activity_Attached_Files, Activity_Submission
-from apps.Course.models import Course
-from .serializer import (
-    ActivitySerializer, 
-    ActivityFileSerializer, 
-    ActivitySubmitSerializer, 
-    ActivityDetailSerializer, 
-    ActivityListSubmissions,
-    ActivitySubmissionDetailSerializer,
-    ActivityReturnForStudentReviewSerializer
-)
-from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView, UpdateAPIView
-from django.shortcuts import get_object_or_404
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.views import APIView
+from django.db.models.query import QuerySet
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.decorators import APIView, action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.generics import CreateAPIView, ListAPIView
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum
-from apps.Activity.models import Activity
-from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 
-class ActivityListView(ListAPIView):
+from apps.Activity.models import Activity, Activity_Submission
+from apps.Course.models import Course
+from .serializer import ActivitySerializer, ActivityFileSerializer, ActivitySubmissionDetailSerializer, ActivityReturnForStudentReviewSerializer
+from ..core.permissions import IsTeacher
+from apps.Question.models import Question
+from apps.Question.serializer import QuestionsSerializer
+from ssa.urls import ACTIVITY_API_PREFIX as DEFAULT_API_PREFIX
+
+class ActivityViewSet(
+    CreateModelMixin,
+    RetrieveModelMixin,
+    ListModelMixin,
+    UpdateModelMixin,
+    GenericViewSet
+):
+    """
+    Unified REST controller for the Activity resource and its sub-actions.
+    """
     serializer_class = ActivitySerializer
     
-    def get_queryset(self):
+    def get_permissions(self):
+        """
+        Action-based permission routing.
+        """
+        if self.action in ['list', 'retrieve', 'submit']:
+            return [AllowAny()]
+        
+        return [IsAuthenticated(), IsTeacher()]
+    
+    def get_queryset(self) -> QuerySet[Activity]:
         user = self.request.user
         queryset = Activity.objects.none()
         
@@ -38,86 +53,80 @@ class ActivityListView(ListAPIView):
             return queryset
             
         course_id = self.request.query_params.get('course_id') # type: ignore
-        
         if course_id:
             target_course = get_object_or_404(Course, pk=course_id, is_active=True)
             return queryset.filter(course=target_course)
             
-        return queryset.none()
+        return queryset
 
-class ActivityDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Activity.objects.all()
-    serializer_class = ActivityDetailSerializer
-    lookup_field = 'pk'
+    # --- SATELLITE ACTIONS CONSOLIDATED ---
 
-class ActivityCreateView(CreateAPIView):
-    queryset = Activity.objects.all()
-    serializer_class = ActivitySerializer
-    
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
-
-class ActivityUpdateView(RetrieveUpdateDestroyAPIView):
-    queryset = Activity.objects.all()
-    serializer_class = ActivitySerializer
-    lookup_field = 'pk'
-
-class ActivityUploadFileView(CreateAPIView):
-    queryset = Activity_Attached_Files.objects.all()
-    serializer_class = ActivityFileSerializer
-    parser_classes = [MultiPartParser, FormParser]
-    
-class ActivityImportFileView(CreateAPIView):
-    queryset = Activity_Attached_Files.objects.all()
-    serializer_class = ActivityFileSerializer
-    parser_classes = [MultiPartParser, FormParser]
-    lookup_field = 'pk'
-    
-class ActivityDetachFileView(RetrieveUpdateDestroyAPIView):
-    queryset = Activity_Attached_Files.objects.all()
-    serializer_class = ActivityFileSerializer
-    lookup_field = 'pk'
-    
-class ActivityPublishView(APIView):
-    def patch(self, request, pk, *args, **kwargs):
+    @action(detail=True, methods=['patch'], url_path='publish')
+    def publish(self, request, pk=None) -> Response:
         """
-        Transita a atividade de DRAFT para PUBLISHED garantindo a integridade dos dados.
+        Transitions the activity from DRAFT to PUBLISHED.
+        Route automatically generated: PATCH /activities/{pk}/publish/
         """
-        activity = get_object_or_404(Activity, pk=pk)
+        activity: Activity = self.get_object()
 
         if activity.status == Activity.ActivityStatus.PUBLISHED:
-            raise ValidationError({"detail": "Esta atividade já encontra-se publicada."})
+            raise ValidationError({"detail": "This activity is already published."})
 
         if activity.activity_type == Activity.ActivityType.TST:
-            if not activity.questions.exists(): # type: ignore
-                raise ValidationError({"detail": "Um teste não pode ser publicado sem questões."})
+            if not activity.questions.exists(): 
+                raise ValidationError({"detail": "A test cannot be published without questions."})
             
-            total_pesos = activity.questions.aggregate(Sum('question_expected_result'))['question_expected_result__sum'] or 0 # type: ignore
+            total_pesos = activity.questions.aggregate(
+                total=Sum('question_expected_result')
+            )['total'] or 0
+            
             if total_pesos != activity.total_grade:
                  raise ValidationError({
-                    "detail": f"A soma dos pesos das questões ({total_pesos}) difere da nota total ({activity.total_grade})."
+                    "detail": f"The sum of question weights ({total_pesos}) differs from the total grade ({activity.total_grade})."
                 })
 
         activity.status = Activity.ActivityStatus.PUBLISHED
         activity.save()
 
         return Response({
-            "detail": "Atividade publicada.", 
+            "detail": "Activity published successfully.", 
             "status": activity.status
         }, status=status.HTTP_200_OK)
-        
-class ActivitySubmitView(CreateAPIView):
-    queryset = Activity_Submission.objects.all()
-    serializer_class = ActivitySubmitSerializer
-    lookup_field = 'pk'
+
+    @action(detail=True, methods=['post'], url_path='upload-file', parser_classes=[MultiPartParser, FormParser])
+    def upload_file(self, request, pk=None) -> Response:
+        """
+        Handles file attachments for a specific activity.
+        Route automatically generated: POST /activities/{pk}/upload-file/
+        """
+        activity = self.get_object()
+        serializer = ActivityFileSerializer(data=request.data, context={'activity': activity})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-class ActivityListSubmissionsView(APIView):
+class ListActivityQuestionsView(ListModelMixin, GenericViewSet):
+    """
+    Returns the list of questions associated with a specific activity.
+    """
+    serializer_class = QuestionsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        activity_id = self.kwargs.get('pk')
+        return Question.objects.filter(activity_id=activity_id)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+class ListActivitySubmissionsGroupedView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, pk):
         """
-        Garante que apenas professores possam acessar os dados.
-        Retorna as submissões agrupadas por aluno em O(n) com uma única query no banco.
+        Returns a list of submissions for a specific activity, grouped by student.
         """
         if not getattr(request.user, 'is_teacher', False):
             return Response({"detail": "Acesso negado."}, status=403)
@@ -136,7 +145,7 @@ class ActivityListSubmissionsView(APIView):
                     "student_id": student_id,
                     "student_name": sub.student.name, # type: ignore
                     "submitted_at": sub.submitted_at.isoformat(),
-                    "submissions": f"activity/{pk}/student/{student_id}/submissions/"
+                    "submissions": f"{DEFAULT_API_PREFIX}/{pk}/student/{student_id}/submissions/"
                 }
 
         return Response(list(grouped_data.values()))
@@ -153,18 +162,13 @@ class ActivityStudentSubmissionDetailView(ListAPIView):
             activity_id=activity_id, 
             student_id=student_id
         ).select_related('submission_question')
-
+        
 class ActivityReturnToStudentReviewView(APIView):
     permission_classes = [IsAuthenticated]
     
     def patch(self, request, pk, student_id):
         """
-        Recebe um payload no formato:
-        {
-            "evaluations": [
-                {"submission_id": "uuid", "submission_grade": 10, "teacher_feedback": "..."}
-            ]
-        }
+        
         """
         if not getattr(request.user, 'is_teacher', False):
             return Response({"detail": "Acesso negado. Apenas professores podem avaliar."}, status=403)

@@ -1,15 +1,12 @@
-from django.shortcuts import render
-from .models import Course
-from .serializer import CourseSerializer
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
-
 from django.db.models.query import QuerySet
+
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
+
+from ..core.permissions import IsTeacher
 from .models import Course
 from .serializer import CourseSerializer
-from ..core.permissions import IsTeacher
 
 class CourseViewSet(
     CreateModelMixin,

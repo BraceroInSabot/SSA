@@ -22,7 +22,7 @@ export default function ActivityResponder() {
                 const actData = await retrieveActivity(id);
                 setActivity(actData);
 
-                const qRes = await api.get(`/activity/${id}/questions/`);
+                const qRes = await api.get(`/activities/${id}/questions/`);
                 setQuestions(qRes.data);
             } catch (error) {
                 alert("Erro ao carregar a prova. Verifique sua conexão.");

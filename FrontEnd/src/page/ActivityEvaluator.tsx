@@ -40,8 +40,8 @@ export default function ActivityEvaluator() {
             if (!id) return;
             try {
                 const [questionsRes, studentsRes] = await Promise.all([
-                    api.get(`/activity/${id}/questions/response/`),
-                    api.get(`/activity/${id}/submissions/grouped/`)
+                    api.get(`/activities/${id}/questions/response/`),
+                    api.get(`/activities/${id}/submissions/grouped/`)
                 ]);
                 
                 setActivityQuestions(questionsRes.data);
@@ -103,6 +103,7 @@ export default function ActivityEvaluator() {
         
         try {
             const endpoint = student.submissions.startsWith('/') ? student.submissions : `/${student.submissions}`;
+            console.log(endpoint, student.submissions, student);
             const res = await api.get(endpoint);
             const submissionsData: SubmissionDetail[] = res.data;
             
@@ -165,7 +166,7 @@ export default function ActivityEvaluator() {
         }));
 
         try {
-            await api.patch(`/activity/${id}/student/${selectedStudentId}/submit-review/`, { evaluations: payload });
+            await api.patch(`/activities/${id}/student/${selectedStudentId}/submit-review/`, { evaluations: payload });
             alert("Avaliação salva com sucesso!");
         } catch (error) {
             alert("Erro ao salvar avaliação.");

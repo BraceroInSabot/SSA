@@ -5,6 +5,7 @@ import json
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from apps.Question.models import Question
+from typing import List, Dict, Any
 
 class ActivityFileSerializer(ModelSerializer):
     class Meta:
@@ -13,21 +14,10 @@ class ActivityFileSerializer(ModelSerializer):
         read_only_fields = ['attached_files_id']
 
 class ActivitySerializer(ModelSerializer):
-    attached_files = ActivityFileSerializer(many=True, read_only=True)
-    questions = QuestionsSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Activity
-        fields = '__all__'
-        read_only_fields = ['activity_id']
-        
-class HasStudentSubmission(ModelSerializer):
-    class Meta:
-        model = Activity_Submission
-        fields = ['submission_id']
-        read_only_fields = ['submission_id']
-
-class ActivityDetailSerializer(ModelSerializer):
+    """
+    Unified serializer for the Activity resource.
+    WARNING: Contains heavy SerializerMethodFields. Handle querysets carefully to avoid N+1.
+    """
     attached_files = ActivityFileSerializer(many=True, read_only=True)
     has_student_submission = SerializerMethodField()
     teacher_submission = SerializerMethodField()
@@ -36,14 +26,11 @@ class ActivityDetailSerializer(ModelSerializer):
         model = Activity
         fields = '__all__'
         read_only_fields = ['activity_id']
-    
-    def get_has_student_submission(self, obj) -> bool:
-        """
-        Verify if user is logged in. If is a student, check if he had already made a activity submission.
-        """
+
+    def get_has_student_submission(self, obj: Activity) -> bool:
         request = self.context.get('request')
         
-        if not request or not getattr(request.user, 'is_authenticated', False):
+        if not request or not getattr(request.user, 'is_authenticated', False) or getattr(request.user, 'is_teacher', False):
             return False
             
         return Activity_Submission.objects.filter(
@@ -51,33 +38,44 @@ class ActivityDetailSerializer(ModelSerializer):
             student=request.user
         ).exists()
         
-    def get_teacher_submission(self, obj):
-        """
-        Retorna uma lista padronizada de feedbacks do professor.
-        Garante um contrato previsível: sempre retorna list[], nunca booleanos ou dicionários soltos.
-        """
+    def get_teacher_submission(self, obj: Activity) -> List[Dict[str, Any]]:
         request = self.context.get('request')
         
         if not request or not getattr(request.user, 'is_authenticated', False) or not getattr(request.user, 'is_student', False):
             return []
         
+        # FIX: select_related('submission_question') prevents N+1 DB hits inside the loop.
         submissions = Activity_Submission.objects.filter(
             activity=obj, 
             student=request.user
-        ).exclude(has_teacher_revision=False)
+        ).exclude(has_teacher_revision=False).select_related('submission_question')
         
-        return [
-            {
+        result: List[Dict[str, Any]] = []
+        
+        for sub in submissions:
+            question = sub.submission_question
+            
+            # Architectural typing fix. Replacing the 4 '# type: ignore' hacks.
+            assert question is not None, "A submission must be tied to a valid question."
+            
+            # Decoupling logic for readability
+            is_text_based = question.question_type in (Question.QuestionType.SHORT_ANSWER, Question.QuestionType.ESSAY)
+            response_data = {"response": sub.submission} if is_text_based else {
+                "response": sub.submission, 
+                "response_text": question.question_options
+            }
+
+            result.append({
                 "has_feedback": True, 
                 "teacher_feedback": sub.teacher_feedback,
                 "activity_final_grade": sub.submission_grade,
-                "question_type": sub.submission_question.question_type, # type: ignore
-                "question_description": sub.submission_question.question_description, # type: ignore
-                "question_response": {"response": sub.submission} if sub.submission_question.question_type in (Question.QuestionType.SHORT_ANSWER, Question.QuestionType.ESSAY) else {"response": sub.submission, "response_text": sub.submission_question.question_options}, # type: ignore
-                "question_expected_result": sub.submission_question.question_response, # type: ignore
-            }
-            for sub in submissions
-        ]
+                "question_type": question.question_type,
+                "question_description": question.question_description,
+                "question_response": response_data,
+                "question_expected_result": question.question_response,
+            })
+            
+        return result
         
 class ActivitySubmitSerializer(ModelSerializer):
     class Meta:
