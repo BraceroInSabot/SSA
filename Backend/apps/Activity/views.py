@@ -72,15 +72,12 @@ class ActivityViewSet(
         if activity.status == Activity.ActivityStatus.PUBLISHED:
             raise ValidationError({"detail": "This activity is already published."})
 
-        if activity.activity_type == Activity.ActivityType.TST:
-            if not activity.questions.exists(): 
-                raise ValidationError({"detail": "A test cannot be published without questions."})
-            
+        if activity.activity_type == Activity.ActivityType.TST:            
             total_pesos = activity.questions.aggregate(
                 total=Sum('question_expected_result')
             )['total'] or 0
             
-            if total_pesos != activity.total_grade:
+            if total_pesos != activity.total_grade and activity.questions.exists():
                  raise ValidationError({
                     "detail": f"The sum of question weights ({total_pesos}) differs from the total grade ({activity.total_grade})."
                 })
