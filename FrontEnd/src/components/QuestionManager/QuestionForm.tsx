@@ -159,7 +159,7 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
                 </div>
                 <div className="flex flex-col gap-1 w-32">
                     <label className="text-xs font-bold text-gray-500 uppercase">Valor (Pts)</label>
-                    <input type="number" step="0.1" min="0" value={expectedResult} onChange={(e) => setExpectedResult(Number(e.target.value))} className="input input-bordered w-full bg-white font-bold text-indigo-600" required />
+                    <input type="number" step="0.01" min="0" value={expectedResult} onChange={(e) => setExpectedResult(Number(e.target.value))} className="input input-bordered w-full bg-white font-bold text-indigo-600" required />
                 </div>
             </div>
 
