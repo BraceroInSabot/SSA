@@ -14,7 +14,7 @@ from django.db import transaction
 
 from apps.Activity.models import Activity, Activity_Submission
 from apps.Course.models import Course
-from .serializer import ActivitySerializer, ActivityFileSerializer, ActivitySubmissionDetailSerializer, ActivityReturnForStudentReviewSerializer
+from .serializer import ActivitySerializer, ActivityFileSerializer, ActivitySubmissionDetailSerializer, ActivityReturnForStudentReviewSerializer, ActivitySubmitSerializer
 from ..core.permissions import IsTeacher
 from apps.Question.models import Question
 from apps.Question.serializer import QuestionsSerializer
@@ -105,6 +105,18 @@ class ActivityViewSet(
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
+    @action(detail=True, methods=['post'], url_path='submit')
+    def submit(self, request, pk=None) -> Response:
+        """
+        Submits answers for a specific activity.
+        Route automatically generated: POST /activities/{pk}/submit/
+        """
+        activity = self.get_object()
+        serializer = ActivitySubmitSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Activity submitted successfully."}, status=status.HTTP_200_OK)
+
 class ListActivityQuestionsView(ListModelMixin, GenericViewSet):
     """
     Returns the list of questions associated with a specific activity.
@@ -114,7 +126,7 @@ class ListActivityQuestionsView(ListModelMixin, GenericViewSet):
 
     def get_queryset(self):
         activity_id = self.kwargs.get('pk')
-        return Question.objects.filter(activity_id=activity_id)
+        return Question.objects.filter(activity=activity_id)
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

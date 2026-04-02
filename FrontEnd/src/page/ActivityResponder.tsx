@@ -126,7 +126,7 @@ export default function ActivityResponder() {
 
         try {
             // Como mudamos para FormData, enviamos direto pela API para garantir os headers corretos
-            await api.post(`/activity/${id}/submit/`, formData, {
+            await api.post(`/activities/${id}/submit/`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             alert("Trabalho enviado com sucesso!");

@@ -110,7 +110,7 @@ export default function ActivityEditor() {
         if (!activityId) return;
         setIsLoading(true);
         try {
-            await api.patch(`/activity/${activityId}/publish/`);
+            await api.patch(`/activities/${activityId}/publish/`);
             setStatus('PUB');
             alert("Atividade publicada com sucesso!");
         } catch (error: any) {

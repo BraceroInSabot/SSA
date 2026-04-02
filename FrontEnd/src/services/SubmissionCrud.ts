@@ -7,6 +7,6 @@ export interface QuestionSubmissionPayload {
 }
 
 export const submitActivityAnswers = async (activityId: string, answers: QuestionSubmissionPayload[]) => {
-    const response = await api.post(`/activity/${activityId}/submit/`, { answers });
+    const response = await api.post(`/activities/${activityId}/submit/`, { answers });
     return response.data;
 };
