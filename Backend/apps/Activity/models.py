@@ -11,6 +11,7 @@ class Activity(models.Model):
         LAB = 'LAB', 'Lab'
         PRJ = 'PRJ', 'Project'
         TST = 'TST', 'Test'
+        FIL = 'FIL', 'File'
         
     class ActivityStatus(models.TextChoices):
         DRAFT = 'DRF', 'Draft'
