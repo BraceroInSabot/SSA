@@ -1,4 +1,4 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField, CharField, UUIDField
+from rest_framework.serializers import ModelSerializer, SerializerMethodField, CharField, UUIDField, FileField, FilePathField
 from apps.Activity.models import Activity, Activity_Attached_Files, Activity_Submission
 from apps.Question.serializer import QuestionsSerializer
 import json
@@ -141,7 +141,8 @@ class ActivitySubmissionDetailSerializer(ModelSerializer):
             'teacher_feedback', 
             'submission', 
             'submission_question', 
-            'question_description'
+            'question_description',
+            'file'
         ]  
     
 class ActivityReturnForStudentReviewSerializer(ModelSerializer):
@@ -151,3 +152,30 @@ class ActivityReturnForStudentReviewSerializer(ModelSerializer):
         model = Activity_Submission
         fields = ['submission_id', 'submission_grade', 'teacher_feedback']
         
+
+class ActivitySubmissionFileUploadSerializer(ModelSerializer):
+    class Meta:
+        model = Activity_Submission
+        fields = ['file'] 
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        activity = self.context.get('activity')
+        assert request is not None, "Request context is required."
+        assert activity is not None, "Activity context is required."
+        
+        student = request.user
+        
+        if Activity_Submission.objects.filter(activity=activity, student=student).exists():
+            raise ValidationError(
+                {"detail": "You have already submitted a file for this activity."}
+            )
+            
+        submission = Activity_Submission.objects.create(
+            student=student,
+            activity=activity,
+            file=validated_data.get('file'),
+            submission_question=None,  
+        )
+        
+        return submission

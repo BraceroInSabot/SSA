@@ -14,7 +14,14 @@ from django.db import transaction
 
 from apps.Activity.models import Activity, Activity_Submission
 from apps.Course.models import Course
-from .serializer import ActivitySerializer, ActivityFileSerializer, ActivitySubmissionDetailSerializer, ActivityReturnForStudentReviewSerializer, ActivitySubmitSerializer
+from .serializer import (
+    ActivitySerializer, 
+    ActivityFileSerializer, 
+    ActivitySubmissionDetailSerializer, 
+    ActivityReturnForStudentReviewSerializer, 
+    ActivitySubmitSerializer,
+    ActivitySubmissionFileUploadSerializer
+)
 from ..core.permissions import IsTeacher
 from apps.Question.models import Question
 from apps.Question.serializer import QuestionsSerializer
@@ -219,4 +226,33 @@ class ActivityReturnToStudentReviewView(APIView):
                 )
 
         return Response({"detail": "Avaliações salvas com sucesso."}, status=200)
+
+class ActivitySubmissionFileUploadView(CreateAPIView):
+    """
+    Endpoint para alunos enviarem o arquivo final da atividade.
+    A rota no urls.py DEVE ser: path('activities/<str:pk>/submit-file/', ...)
+    Sem student_id na URL.
+    """
+    serializer_class = ActivitySubmissionFileUploadSerializer
+    permission_classes = [IsAuthenticated]
     
+    parser_classes = [MultiPartParser, FormParser] 
+
+    def post(self, request, pk, *args, **kwargs):
+        activity = get_object_or_404(Activity, pk=pk)
+        
+        if activity.activity_type != Activity.ActivityType.FIL:
+            raise ValidationError({"detail": "Esta modalidade de atividade não aceita o envio de arquivos diretos."})
+
+        serializer = self.get_serializer(
+            data=request.data, 
+            context={'request': request, 'activity': activity}
+        )
+        
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        return Response(
+            {"detail": "Trabalho entregue com sucesso para avaliação."}, 
+            status=status.HTTP_201_CREATED
+        )

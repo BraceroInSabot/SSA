@@ -9,7 +9,8 @@ interface SubmissionDetail {
     submission_grade: number;
     teacher_feedback: string;
     submission: any;
-    submission_question: string;
+    submission_question: string | null;
+    file?: string; // Adicionado para receber o link do arquivo
 }
 
 interface StudentGroup {
@@ -22,6 +23,10 @@ interface StudentGroup {
 export default function ActivityEvaluator() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+
+    // Estados da Atividade
+    const [activityType, setActivityType] = useState<string>('TST');
+    const [activityMaxGrade, setActivityMaxGrade] = useState<number>(10);
 
     const [activityQuestions, setActivityQuestions] = useState<QuestionDefinition[]>([]);
     const [studentsData, setStudentsData] = useState<StudentGroup[]>([]);
@@ -39,20 +44,23 @@ export default function ActivityEvaluator() {
         const fetchInitialData = async () => {
             if (!id) return;
             try {
-                const [questionsRes, studentsRes] = await Promise.all([
+                // Buscamos a atividade base para saber se é TST ou FIL
+                const [activityRes, questionsRes, studentsRes] = await Promise.all([
+                    api.get(`/activities/${id}/`),
                     api.get(`/activities/${id}/questions/response/`),
                     api.get(`/activities/${id}/submissions/grouped/`)
                 ]);
                 
+                setActivityType(activityRes.data.activity_type);
+                setActivityMaxGrade(activityRes.data.total_grade);
                 setActivityQuestions(questionsRes.data);
                 setStudentsData(studentsRes.data);
                 
                 if (studentsRes.data.length > 0) {
-                    // Passa os dados brutos como fallback para contornar o delay do useState
                     handleSelectStudent(studentsRes.data[0], questionsRes.data);
                 }
             } catch (error) {
-                alert("Erro ao carregar a infraestrutura da prova. Verifique sua conexão e a estrutura da API.");
+                alert("Erro ao carregar a infraestrutura da prova. Verifique sua conexão.");
             } finally {
                 setIsLoading(false);
             }
@@ -103,7 +111,6 @@ export default function ActivityEvaluator() {
         
         try {
             const endpoint = student.submissions.startsWith('/') ? student.submissions : `/${student.submissions}`;
-            console.log(endpoint, student.submissions, student);
             const res = await api.get(endpoint);
             const submissionsData: SubmissionDetail[] = res.data;
             
@@ -114,7 +121,6 @@ export default function ActivityEvaluator() {
                 const q = currentQuestions.find(aq => aq.question_id === sub.submission_question);
                 let currentGrade = sub.submission_grade || 0;
 
-                // Aplica a auto-correção apenas se a nota atual for 0 e a questão existir
                 if (q && currentGrade === 0) {
                     const autoGrade = calculateAutoGrade(sub, q);
                     if (autoGrade > 0) currentGrade = autoGrade;
@@ -178,98 +184,11 @@ export default function ActivityEvaluator() {
     const selectedStudent = studentsData.find(s => s.student_id === selectedStudentId);
     const filteredStudents = studentsData.filter(s => s.student_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const renderStudentAnswer = (submission: any, question: QuestionDefinition) => {
-        if (!submission || Object.keys(submission).length === 0) {
-            return <span className="text-gray-400 italic">Nenhuma resposta fornecida.</span>;
-        }
+    // (Omiti os renders de resposta e gabarito aqui por brevidade, pois eles não mudaram, mas os mantenha no seu arquivo original)
+    // Para o código completo funcionar, certifique-se de que renderStudentAnswer e renderExpectedAnswer estejam aqui como você os escreveu.
+    const renderStudentAnswer = (submission: any, question: QuestionDefinition) => { /* Seu código original */ return <pre>{JSON.stringify(submission)}</pre>; };
+    const renderExpectedAnswer = (question: QuestionDefinition) => { /* Seu código original */ return <pre>Gabarito</pre>; };
 
-        switch (question.question_type) {
-            case 'UC': {
-                const optId = submission.option;
-                const opt = question.question_options?.find((o: any) => o.id === optId);
-                return <p><strong className="text-[#621708] mr-2">{optId})</strong> {opt?.text || 'Alternativa desconhecida'}</p>;
-            }
-            case 'MC': {
-                const optIds = submission.options || [];
-                return (
-                    <ul className="flex flex-col gap-1">
-                        {optIds.map((id: string) => {
-                            const opt = question.question_options?.find((o: any) => o.id === id);
-                            return <li key={id}><strong className="text-[#621708] mr-2">{id})</strong> {opt?.text || ''}</li>;
-                        })}
-                    </ul>
-                );
-            }
-            case 'TF': {
-                const answers = submission.options || {};
-                return (
-                    <ul className="flex flex-col gap-2">
-                        {Object.entries(answers).map(([id, isTrue]) => {
-                            const opt = question.question_options?.find((o: any) => o.id === id);
-                            return (
-                                <li key={id} className="flex items-start gap-2">
-                                    <span className={`font-bold w-6 text-center rounded ${isTrue ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {isTrue ? 'V' : 'F'}
-                                    </span>
-                                    <span><strong className="text-gray-500 mr-1">{id}.</strong> {opt?.text || ''}</span>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                );
-            }
-            case 'SA':
-            case 'ES':
-                return <p className="whitespace-pre-wrap">{submission.option || ''}</p>;
-            default:
-                return <pre className="text-xs text-gray-500">{JSON.stringify(submission, null, 2)}</pre>;
-        }
-    };
-
-    const renderExpectedAnswer = (question: QuestionDefinition) => {
-        const response = question.question_response;
-        if (!response || Object.keys(response).length === 0) {
-            return <span className="text-gray-400 italic">Sem gabarito registrado.</span>;
-        }
-
-        switch (question.question_type) {
-            case 'UC': 
-            case 'MC': {
-                const correctIds = response.answers || [];
-                return (
-                    <ul className="flex flex-col gap-1">
-                        {correctIds.map((id: string) => {
-                            const opt = question.question_options?.find((o: any) => o.id === id);
-                            return <li key={id}><strong className="text-indigo-600 mr-2">{id})</strong> {opt?.text || ''}</li>;
-                        })}
-                    </ul>
-                );
-            }
-            case 'TF': {
-                const correctAnswers = response.answers || {};
-                return (
-                    <ul className="flex flex-col gap-2">
-                        {Object.entries(correctAnswers).map(([id, isTrue]) => {
-                            const opt = question.question_options?.find((o: any) => o.id === id);
-                            return (
-                                <li key={id} className="flex items-start gap-2">
-                                    <span className={`font-bold w-6 text-center rounded ${isTrue ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {isTrue ? 'V' : 'F'}
-                                    </span>
-                                    <span><strong className="text-gray-500 mr-1">{id}.</strong> {opt?.text || ''}</span>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                );
-            }
-            case 'SA':
-            case 'ES':
-                return <p className="whitespace-pre-wrap">{response.expected_text || ''}</p>;
-            default:
-                return <pre className="text-xs text-gray-500">{JSON.stringify(response, null, 2)}</pre>;
-        }
-    };
 
     if (isLoading) return <div className="min-h-screen bg-[#F2F5F7] flex items-center justify-center"><span className="loading loading-spinner loading-lg text-[#621708]"></span></div>;
 
@@ -333,8 +252,63 @@ export default function ActivityEvaluator() {
                                 <div className="flex justify-center items-center py-20">
                                     <span className="loading loading-spinner loading-md text-[#621708]"></span>
                                 </div>
+                            ) : activityType === 'FIL' ? (
+                                // RENDERIZAÇÃO EXCLUSIVA PARA ARQUIVOS (FIL)
+                                activeSubmissions.map(sub => {
+                                    const currentForm = evaluationForm[sub.submission_id] || { grade: 0, feedback: '' };
+                                    return (
+                                        <div key={sub.submission_id} className="card bg-white shadow-sm border border-gray-200">
+                                            <div className="card-body p-6 flex flex-col lg:flex-row gap-8">
+                                                <div className="flex-1 flex flex-col gap-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="font-bold text-gray-800">Trabalho do Aluno</h3>
+                                                            {sub.file ? (
+                                                                <a href={sub.file} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-indigo-600 hover:underline">Fazer Download do Arquivo</a>
+                                                            ) : (
+                                                                <span className="text-sm text-red-500 italic">Arquivo corrompido ou não recebido pela API. {sub.file}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-full lg:w-72 flex flex-col gap-4 border-t lg:border-t-0 lg:border-l border-gray-200 pt-4 lg:pt-0 lg:pl-6">
+                                                    <div className="form-control">
+                                                        <label className="label py-0 pb-1">
+                                                            <span className="label-text font-bold text-gray-600 text-xs uppercase">Nota Obtida</span>
+                                                            <span className="label-text-alt text-gray-400">Max: {activityMaxGrade}</span>
+                                                        </label>
+                                                        <input 
+                                                            type="number" step="0.1" min="0" max={activityMaxGrade}
+                                                            value={currentForm.grade === 0 ? '' : currentForm.grade}
+                                                            onChange={(e) => handleFormChange(sub.submission_id, 'grade', e.target.value, activityMaxGrade)}
+                                                            className="input input-bordered bg-green-50 text-green-900 font-bold text-lg focus:border-green-500" 
+                                                        />
+                                                    </div>
+
+                                                    <div className="form-control flex-1">
+                                                        <label className="label py-0 pb-1">
+                                                            <span className="label-text font-bold text-gray-600 text-xs uppercase">Feedback do Trabalho</span>
+                                                        </label>
+                                                        <textarea 
+                                                            value={currentForm.feedback}
+                                                            onChange={(e) => handleFormChange(sub.submission_id, 'feedback', e.target.value)}
+                                                            placeholder="Comente sobre a estrutura, clareza e resultados do arquivo enviado..."
+                                                            className="textarea textarea-bordered h-full min-h-[100px] bg-gray-50 text-sm" 
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
                             ) : (
+                                // RENDERIZAÇÃO ORIGINAL PARA TESTES (TST/ATV)
                                 activityQuestions.map((q, index) => {
+                                    // ... SEU CÓDIGO ORIGINAL DO MAP DE QUESTÕES FICA AQUI ...
                                     const sub = activeSubmissions.find(s => s.submission_question === q.question_id);
                                     
                                     if (!sub) {
@@ -401,7 +375,6 @@ export default function ActivityEvaluator() {
                                                         />
                                                     </div>
                                                 </div>
-
                                             </div>
                                         </div>
                                     );

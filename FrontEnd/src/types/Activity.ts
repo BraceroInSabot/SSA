@@ -1,41 +1,45 @@
-interface AttachedFile {
+// 1. Tipagem auxiliar para os arquivos do professor
+export interface AttachedFile {
     attached_files_id: string;
-    file: string; 
+    file: string; // URL do arquivo físico
 }
 
-interface Activity {
+// 2. Tipagem auxiliar para o gabarito/feedback
+export interface TeacherSubmissionFeedback {
+    activity_final_grade: number;
+    question_description: string;
+    question_type: string;
+    question_response: any;
+    question_expected_result: any;
+    teacher_feedback?: string;
+}
+
+// 3. A Interface Principal
+export interface Activity {
     activity_id: string;
     name: string;
-    activity_type: 'EXERCISE' | 'TEST' | 'PROJECT';
-    total_grade: number;
-    has_submission: boolean
-    to_be_launched: string; // ISO string
-    lauched_at: string; // ISO string
-    due_date: string; // ISO string
     description: string;
+    to_be_launched: string; // Formato ISO de data
+    due_date: string;       // Formato ISO de data
+    total_grade: number;
     is_active: boolean;
-    course: string; // course ID
-    attached_files: AttachedFile[];
-    status: 'DRF' | 'PUB' | 'ARC';
-    has_student_submission: boolean;
-    teacher_submission: []
+    has_submission: boolean;
+    course: string;
+    status: 'DRF' | 'PUB';
+    
+    // --- LINHAS QUE VOCÊ PRECISA GARANTIR QUE EXISTEM (E POR QUÊ) ---
+    
+    // POR QUE: Sem isso, os seus ifs (activity_type === 'FIL') vão quebrar. 
+    // Isso garante que o TS saiba que a atividade pode ser de envio de arquivo.
+    activity_type: 'ATV' | 'LAB' | 'PRJ' | 'TST' | 'FIL'; 
+    
+    // POR QUE: Fundamental para esconder a Dropzone de Upload depois que o aluno enviar o trabalho.
+    // Se isso não estiver mapeado, o aluno poderá enviar arquivos infinitamente.
+    has_student_submission: boolean; 
+    
+    // POR QUE: Garante o mapeamento do array na hora de renderizar a lista de downloads do professor.
+    attached_files?: AttachedFile[];
+    
+    // POR QUE: É o array que o seu `calculateTotalGrade` e o `map` de detalhamento de questões percorrem.
+    teacher_submission?: TeacherSubmissionFeedback[];
 }
-
-interface QuestionOption {
-    id: string;
-    text: string;
-    is_correct: boolean;
-}
-
-interface QuestionDefinition {
-    question_id?: string;
-    question_description: string;
-    question_type: 'MC' | 'UC' | 'TF' | 'SA' | 'ES' | 'FL';
-    question_expected_result: number;
-    options_payload: QuestionOption[];
-    question_response?: any;
-    question_options?: any;
-
-}
-
-export type { Activity, AttachedFile, QuestionOption, QuestionDefinition };

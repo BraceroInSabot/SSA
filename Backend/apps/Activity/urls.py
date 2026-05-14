@@ -5,7 +5,8 @@ from .views import (
     ActivityViewSet,
     ListActivitySubmissionsGroupedView,
     ActivityStudentSubmissionDetailView,
-    ActivityReturnToStudentReviewView
+    ActivityReturnToStudentReviewView,
+    ActivitySubmissionFileUploadView
 )
 from apps.Question.views import (ListActivityQuestionsView, ListActivityQuestionsWithResponseView)
 from ssa.urls import ACTIVITY_API_PREFIX as DEFAULT_API_PREFIX
@@ -20,4 +21,5 @@ urlpatterns = [
     path(f'{DEFAULT_API_PREFIX}/<str:pk>/submissions/grouped/', ListActivitySubmissionsGroupedView.as_view(), name='activity-submissions-grouped'),
     path(f'{DEFAULT_API_PREFIX}/<str:pk>/student/<str:student_id>/submissions/', ActivityStudentSubmissionDetailView.as_view(), name='activity-student-submissions'),
     path(f'{DEFAULT_API_PREFIX}/<str:pk>/student/<str:student_id>/submit-review/', ActivityReturnToStudentReviewView.as_view(), name='activity-submit-review'),
+    path(f'{DEFAULT_API_PREFIX}/<str:pk>/student/<str:student_id>/upload-submission/', ActivitySubmissionFileUploadView.as_view(), name='activity-upload-submission'),
 ]

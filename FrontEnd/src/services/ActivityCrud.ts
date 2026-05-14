@@ -40,4 +40,23 @@ const detachActivityFile = async (attached_files_id: string) => {
     return response.data;
 };
 
-export {listActivities, retrieveActivity, createActivity, updateActivity, uploadActivityFile, detachActivityFile};
+const uploadActivitySubmissionFile = async (activityId: string, file: File, studentId: string): Promise<any> => {
+    const formData = new FormData();
+    
+    formData.append('file', file);
+    formData.append('activity', activityId);
+
+    try {
+        const response = await api.post(`/activities/${activityId}/student/${studentId}/upload-submission/`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Falha no upload do arquivo de atividade:", error);
+        throw error;
+    }
+};
+
+export {listActivities, retrieveActivity, createActivity, updateActivity, uploadActivityFile, detachActivityFile, uploadActivitySubmissionFile};

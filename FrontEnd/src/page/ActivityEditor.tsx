@@ -223,6 +223,24 @@ export default function ActivityEditor() {
                                     <input type="number" step="0.1" name="total_grade" value={formData.total_grade} onChange={handleChange} disabled={!isTeacher} className="input input-bordered bg-gray-50 text-xl font-bold text-indigo-600" required />
                                 </div>
 
+                                <div className="form-control mt-2">
+                                    <label className="label-text font-semibold mb-1 text-gray-500 text-xs uppercase">Tipo de Atividade</label>
+                                    <select 
+                                        name="activity_type" 
+                                        value={formData.activity_type} 
+                                        onChange={handleChange} 
+                                        disabled={!isTeacher} 
+                                        className="select select-bordered w-full bg-gray-50 text-gray-800 font-medium"
+                                        required
+                                    >
+                                        <option value="ATV">Atividade</option>
+                                        <option value="LAB">Laboratório Prático</option>
+                                        <option value="PRJ">Projeto</option>
+                                        <option value="TST">Teste / Avaliação (Com Questões)</option>
+                                        <option value="FIL">Envio de Arquivo</option>
+                                    </select>
+                                </div>
+
                                 {isTeacher && (
                                     <>
                                         <div className="flex gap-4 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100">

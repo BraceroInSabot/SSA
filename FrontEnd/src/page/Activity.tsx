@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import NavBar from "../components/NavBar/NavBar";
 import { useAuth } from '../contexts/AuthContext';
-import { retrieveActivity, uploadActivityFile, detachActivityFile } from '../services/ActivityCrud';
+import { retrieveActivity, uploadActivityFile, detachActivityFile, uploadActivitySubmissionFile } from '../services/ActivityCrud';
 import { type Activity } from '../types/Activity';
 
 export default function SingleActivity() {
@@ -12,9 +12,15 @@ export default function SingleActivity() {
     
     const [activity, setActivity] = useState<Activity | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    
+    // Estados do Professor
     const [isUploading, setIsUploading] = useState(false);
     const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    // Estados do Aluno (Novos)
+    const [studentFile, setStudentFile] = useState<File | null>(null);
+    const [isSubmittingStudent, setIsSubmittingStudent] = useState(false);
 
     const fetchActivityDetails = async () => {
         if (!id) return;
@@ -43,6 +49,7 @@ export default function SingleActivity() {
         });
     };
 
+    // --- FUNÇÕES DE ARQUIVO (PROFESSOR) ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
     };
@@ -73,6 +80,29 @@ export default function SingleActivity() {
             console.error(error);
         } finally {
             setDeletingFileId(null);
+        }
+    };
+
+    // --- FUNÇÕES DE ARQUIVO (ALUNO - NOVAS) ---
+    const handleStudentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setStudentFile(e.target.files[0]);
+        }
+    };
+
+    const handleStudentFileUpload = async () => {
+        if (!id || !studentFile) return;
+        setIsSubmittingStudent(true);
+        try {
+            await uploadActivitySubmissionFile(id, studentFile, user?.id); 
+            
+            await fetchActivityDetails();
+            setStudentFile(null);
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao enviar o trabalho.");
+        } finally {
+            setIsSubmittingStudent(false);
         }
     };
 
@@ -239,10 +269,47 @@ export default function SingleActivity() {
 
                         <div className="mb-10">
                             {user?.is_student && activity.has_submission && activity.is_active && !activity.has_student_submission && (
-                                <div className="mt-4 pt-6 border-t border-gray-200 flex justify-start">
-                                    <button onClick={() => navigate(`/atividade/${activity.activity_id}/responder`)} className="btn bg-[#621708] hover:bg-black text-white border-none px-10 shadow-lg">
-                                        Acessar e Responder Prova
-                                    </button>
+                                <div className="mt-6 pt-8 border-t border-gray-200">
+                                    {activity.activity_type === 'TST' ? (
+                                        <div className="flex justify-start">
+                                            <button onClick={() => navigate(`/atividade/${activity.activity_id}/responder`)} className="btn bg-[#621708] hover:bg-black text-white border-none px-10 shadow-lg">
+                                                Acessar e Responder Prova
+                                            </button>
+                                        </div>
+                                    ) : activity.activity_type === 'FIL' ? (
+                                        <div className="bg-blue-50/50 border-2 border-dashed border-blue-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-inner">
+                                            <div className="bg-blue-100 p-4 rounded-full mb-4 shadow-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-blue-600">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-xl font-bold text-blue-900 mb-2">Envio de Trabalho</h3>
+                                            <p className="text-sm text-blue-700 max-w-lg mb-8 leading-relaxed">
+                                                Anexe o documento de resolução da atividade. O sistema aceita <strong>apenas um arquivo</strong> por envio. Se você possui múltiplos documentos, planilhas ou fotos, compacte-os em um único arquivo <strong>.ZIP</strong> antes de enviar.
+                                            </p>
+                                            
+                                            <div className="flex flex-col sm:flex-row gap-4 items-center w-full max-w-xl bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                                                <input 
+                                                    type="file" 
+                                                    onChange={handleStudentFileChange} 
+                                                    className="file-input file-input-bordered file-input-info w-full bg-gray-50" 
+                                                    accept=".pdf,.doc,.docx,.zip,.rar"
+                                                />
+                                                <button 
+                                                    onClick={handleStudentFileUpload} 
+                                                    disabled={!studentFile || isSubmittingStudent} 
+                                                    className="btn bg-blue-600 hover:bg-blue-800 text-white border-none shadow-md w-full sm:w-auto px-8"
+                                                >
+                                                    {isSubmittingStudent ? 'Enviando...' : 'Entregar Trabalho'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="alert bg-gray-100 text-gray-600 border-none rounded-xl">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <span>Esta modalidade de atividade ({activity.activity_type}) não requer envio digital por este painel. Siga as instruções em sala.</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             
@@ -350,7 +417,7 @@ export default function SingleActivity() {
                                 <div className="bg-gray-50 p-6 rounded-lg border border-dashed border-gray-300">
                                     <h4 className="text-sm font-bold text-gray-700 mb-3">Anexar Novo Arquivo</h4>
                                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                                        <input type="file" onChange={handleFileChange} className="file-input file-input-bordered w-full max-w-xs bg-white" />
+                                        <input type="file" id="file-upload" onChange={handleFileChange} className="file-input file-input-bordered w-full max-w-xs bg-white" />
                                         <button onClick={handleFileUpload} disabled={!selectedFile || isUploading} className="btn bg-[#621708] hover:bg-black text-white border-none w-full sm:w-auto">
                                             {isUploading ? 'Enviando...' : 'Enviar Arquivo'}
                                         </button>

@@ -54,7 +54,7 @@ class Activity_Attached_Files(models.Model):
 class Activity_Submission(models.Model):
     submission_id = models.UUIDField(primary_key=True, default=uuid4, editable=False, db_column='submission_PK')
     submission_grade = models.FloatField(db_column='submission_grade', default=0.0)
-    submission_question = models.ForeignKey(Question, on_delete=models.CASCADE, default=None, related_name='submissions', db_column='submission_question_FK')
+    submission_question = models.ForeignKey(Question, on_delete=models.CASCADE, default=None, related_name='submissions', db_column='submission_question_FK', null=True)
     teacher_feedback = models.TextField(db_column='teacher_feedback', default='', blank=True)
     has_teacher_revision = models.BooleanField(db_column='has_teacher_reviision', default=False)
     submission = models.JSONField(db_column='submission_response', default=dict)
