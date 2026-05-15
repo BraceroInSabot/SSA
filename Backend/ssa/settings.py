@@ -47,9 +47,10 @@ INSTALLED_APPS = [
     'apps.Activity',
     'apps.Question',
     'corsheaders',
-    'simple_history',
-    'drf_spectacular',
+    'simple_history'
 ]
+if DEBUG:
+    INSTALLED_APPS += ['drf_spectacular',]
 
 AUTH_USER_MODEL = 'AuthUser.AuthUser'
 
