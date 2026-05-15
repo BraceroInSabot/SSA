@@ -13,8 +13,8 @@ function EntrarButton({ is_navigate, type = "button" }: EntrarButtonProps) {
       return (
         <button 
           type="button"
-          onClick={() => navigate('/login')} 
-          className="entrarbtn cursor-pointer bg-[#F6AA1C] flex items-center justify-center text-white font-bold py-2 px-4 rounded"
+          onClick={() => navigate('/')} 
+          className="entrarbtn cursor-pointer bg-[#3B82F6] hover:bg-[#2563EB] flex items-center justify-center text-white font-semibold py-2 px-4 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-1"
         >
           Ir para o Login
         </button>
@@ -24,7 +24,7 @@ function EntrarButton({ is_navigate, type = "button" }: EntrarButtonProps) {
   return (
     <button 
       type={type} 
-      className="entrarbtn cursor-pointer bg-[#F6AA1C] flex items-center justify-center text-white font-bold py-2 px-4 rounded"
+      className="entrarbtn cursor-pointer bg-[#3B82F6] hover:bg-[#2563EB] flex items-center justify-center text-white font-semibold py-2 px-4 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-1"
     >
       Entrar
     </button>

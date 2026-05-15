@@ -1,3 +1,1 @@
-input {
-    color: #211B15 !important;
-}
+/* Removed hardcoded !important rules to let Tailwind control styles */
