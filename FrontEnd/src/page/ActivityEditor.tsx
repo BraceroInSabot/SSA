@@ -157,10 +157,10 @@ export default function ActivityEditor() {
     const isTeacher = user?.is_teacher;
 
     return (
-        <div className="min-h-screen bg-[#F2F5F7] pb-12">
+        <div className="flex flex-row min-h-screen bg-[#F8FAFC]">
             <NavBar />
             
-            <main className="max-w-6xl mx-auto p-4 lg:p-8">
+            <main className="flex-1 w-full max-w-6xl mx-auto p-4 lg:p-8 pb-12">
                 <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 hover:text-[#621708] transition-colors mb-6 font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-1"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                     Voltar

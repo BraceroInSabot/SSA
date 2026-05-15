@@ -209,7 +209,7 @@ export default function SingleActivity() {
     const totalGrade = calculateTotalGrade();
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#F2F5F7]">
+        <div className="flex flex-row min-h-screen bg-[#F8FAFC]">
             <NavBar />
             
             <main className="flex-1 p-4 lg:p-10 max-w-5xl mx-auto w-full">

@@ -55,7 +55,7 @@ function Activities() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#F2F5F7]">
+        <div className="flex flex-row min-h-screen bg-[#F8FAFC]">
             <NavBar />
             
             <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 lg:p-10">

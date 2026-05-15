@@ -193,7 +193,7 @@ export default function ActivityEvaluator() {
     if (isLoading) return <div className="min-h-screen bg-[#F2F5F7] flex items-center justify-center"><span className="loading loading-spinner loading-lg text-[#621708]"></span></div>;
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#F2F5F7]">
+        <div className="flex flex-row min-h-screen bg-[#F8FAFC]">
             <NavBar />
             
             <div className="flex-1 flex overflow-hidden">
