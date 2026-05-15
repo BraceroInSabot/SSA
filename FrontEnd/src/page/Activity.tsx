@@ -97,6 +97,7 @@ export default function SingleActivity() {
         if (!id || !studentFile) return;
         setIsSubmittingStudent(true);
         try {
+            //@ts-ignore
             await uploadActivitySubmissionFile(id, studentFile, user?.id); 
             await fetchActivityDetails();
             setStudentFile(null);

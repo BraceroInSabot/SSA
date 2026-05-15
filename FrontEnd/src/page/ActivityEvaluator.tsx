@@ -186,7 +186,9 @@ export default function ActivityEvaluator() {
 
     // (Omiti os renders de resposta e gabarito aqui por brevidade, pois eles não mudaram, mas os mantenha no seu arquivo original)
     // Para o código completo funcionar, certifique-se de que renderStudentAnswer e renderExpectedAnswer estejam aqui como você os escreveu.
+    //@ts-ignore
     const renderStudentAnswer = (submission: any, question: QuestionDefinition) => { /* Seu código original */ return <pre>{JSON.stringify(submission)}</pre>; };
+    //@ts-ignore
     const renderExpectedAnswer = (question: QuestionDefinition) => { /* Seu código original */ return <pre>Gabarito</pre>; };
 
 

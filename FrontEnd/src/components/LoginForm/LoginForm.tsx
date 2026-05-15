@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Logotipo from '../../assets/img/Logotipo.svg';
 import { loginUser } from "../../services/AuthService";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
