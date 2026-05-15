@@ -9,7 +9,7 @@ import ProfilePage from '../page/Profile';
 
 const router = createBrowserRouter([
   {
-    path: '/login',
+    path: '/',
     element: <Login />,
   },
   {
@@ -21,11 +21,11 @@ const router = createBrowserRouter([
     element: <SingleActivity />,
   },
   {
-    path: '/atividade/novo', // <-- Rota para criar do zero
+    path: '/atividade/novo',
     element: <ActivityEditor />,
   },
   {
-    path: '/atividade/editar/:id', // <-- Rota para editar questões de algo existente
+    path: '/atividade/editar/:id',
     element: <ActivityEditor />,
   },
   {
