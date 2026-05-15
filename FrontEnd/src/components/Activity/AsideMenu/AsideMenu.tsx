@@ -44,28 +44,28 @@ function AsideMenu({ courses, selectedCourseId, onCourseSelected, onCourseCreate
     };
 
     return (
-        <aside className="w-full lg:w-1/4 bg-[#621708] rounded-xl shadow-md p-4 text-white">
-            <div className="flex justify-between items-center mb-4 px-4">
-                <h2 className="text-xl font-bold">Cursos Ativos</h2>
+        <aside className="w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-800">Cursos Ativos</h2>
                 
                 {user?.is_teacher && (
                     <button 
                         type="button" 
                         onClick={openModal} 
-                        className="cursor-pointer bg-[#F6AA1C] hover:bg-yellow-600 transition-colors flex items-center justify-center text-white font-bold py-1 px-3 rounded text-sm"
+                        className="cursor-pointer bg-[#3B82F6] hover:bg-blue-700 transition-colors flex items-center justify-center text-white font-bold py-2 px-4 rounded-lg text-sm shadow-md"
                     >
                         Criar Curso
                     </button>
                 )}
             </div>
 
-            <ul className="menu w-full text-base-content">
+            <ul className="flex flex-row overflow-x-auto gap-3 pb-2 w-full">
                 {courses.map((course) => {
                     
                     return (
-                        <li key={course.course_id || Math.random()}> 
+                        <li key={course.course_id || Math.random()} className="shrink-0"> 
                             <a 
-                                className={selectedCourseId === course.course_id ? "active font-bold text-white bg-white/20" : "hover:bg-white/10 text-gray-300"}
+                                className={`px-5 py-2 rounded-lg font-medium cursor-pointer transition-colors block border ${selectedCourseId === course.course_id ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-md' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-gray-800'}`}
                                 onClick={() => {
                                     onCourseSelected(course.course_id);
                                 }}

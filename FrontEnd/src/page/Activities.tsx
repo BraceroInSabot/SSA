@@ -58,7 +58,7 @@ function Activities() {
         <div className="flex flex-row min-h-screen bg-[#F8FAFC]">
             <NavBar />
             
-            <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 lg:p-10">
+            <div className="flex-1 flex flex-col gap-6 p-4 lg:p-10 max-w-[1080px] mx-auto w-full">
                 <AsideMenu 
                     courses={courses}
                     selectedCourseId={selectedCourseId}
