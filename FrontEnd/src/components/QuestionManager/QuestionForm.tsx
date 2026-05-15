@@ -143,7 +143,7 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
         <form onSubmit={handleSubmit} className="p-6 rounded-xl bg-white border border-gray-200 shadow-sm gap-6 flex flex-col">
             <div className="flex flex-col gap-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Enunciado da Questão</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Assinale a alternativa que descreve a principal causa da..." className="textarea textarea-bordered w-full h-24 bg-gray-50 focus:border-[#621708] focus:ring-1 focus:ring-[#621708]" required />
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Assinale a alternativa que descreve a principal causa da..." className="textarea textarea-bordered w-full h-24 bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required />
             </div>
 
             <div className="flex flex-wrap gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
@@ -211,7 +211,7 @@ export default function QuestionForm({ initialData, onSave, onCancel }: Question
 
             <div className="flex justify-end gap-3 mt-4 border-t pt-6">
                 {initialData && <button type="button" onClick={onCancel} className="btn btn-ghost">Cancelar Edição</button>}
-                <button type="submit" className="btn bg-[#621708] hover:bg-black text-white px-8 border-none shadow-md">
+                <button type="submit" className="btn bg-blue-500 hover:bg-blue-600 text-white px-8 border-none shadow-md">
                     {initialData ? 'Atualizar Questão' : 'Salvar Questão'}
                 </button>
             </div>

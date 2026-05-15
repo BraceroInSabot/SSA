@@ -4,6 +4,16 @@ export interface AttachedFile {
     file: string; // URL do arquivo físico
 }
 
+export interface QuestionDefinition {
+    question_id?: string;
+    question_description: string;
+    question_type: 'UC' | 'MC' | 'TF' | 'SA' | 'ES' | 'FL' | 'FIL';
+    question_expected_result: number;
+    question_order?: number;
+    question_options?: any;
+    question_response?: any;
+}
+
 // 2. Tipagem auxiliar para o gabarito/feedback
 export interface TeacherSubmissionFeedback {
     activity_final_grade: number;

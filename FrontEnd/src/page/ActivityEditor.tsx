@@ -17,13 +17,17 @@ export default function ActivityEditor() {
     const [isLoading, setIsLoading] = useState(false);
     const courseId = location.state?.courseId;
 
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
     // Estado Unificado
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        to_be_launched: '',
-        due_date: '',
-        total_grade: 10,
+        to_be_launched: today.toISOString().slice(0, 10),
+        due_date: nextWeek.toISOString().slice(0, 10),
+        total_grade: 1,
         activity_type: 'TST',
         is_active: true,
         has_submission: true
@@ -38,7 +42,7 @@ export default function ActivityEditor() {
     const formatForInput = (isoString: string) => {
         if (!isoString) return '';
         const date = new Date(isoString);
-        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     };
 
     const loadActivity = async (targetId: string) => {
@@ -161,7 +165,7 @@ export default function ActivityEditor() {
             <NavBar />
             
             <main className="flex-1 w-full max-w-6xl mx-auto p-4 lg:p-8 pb-12">
-                <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 hover:text-[#621708] transition-colors mb-6 font-medium">
+                <button onClick={() => navigate(-1)} className="flex items-center text-slate-500 hover:text-blue-500 transition-colors mb-6 font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-1"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                     Voltar
                 </button>
@@ -178,13 +182,13 @@ export default function ActivityEditor() {
                                 {formData.is_active ? 'Ativa' : 'Inativa'}
                             </span>
                         </div>
-                        <h1 className="text-3xl lg:text-4xl font-black text-gray-800 tracking-tight">
+                        <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
                             {formData.name || 'Nova Atividade'}
                         </h1>
                     </div>
                     
                     {isTeacher && activityId && status === 'DRF' && (
-                        <button onClick={handlePublish} disabled={isLoading} className="btn bg-[#621708] hover:bg-black text-white border-none shadow-md px-8">
+                        <button onClick={handlePublish} disabled={isLoading} className="btn bg-blue-500 hover:bg-blue-600 text-white border-none shadow-md px-8">
                             {isLoading ? 'Processando...' : 'Publicar Atividade Oficial'}
                         </button>
                     )}
@@ -210,11 +214,11 @@ export default function ActivityEditor() {
                                 <div className="grid grid-cols-1 gap-4 mt-2">
                                     <div className="form-control">
                                         <label className="label-text font-semibold mb-1 text-gray-500 text-xs uppercase">Lançamento</label>
-                                        <input type="datetime-local" name="to_be_launched" value={formData.to_be_launched} onChange={handleChange} disabled={!isTeacher} className="input input-bordered bg-gray-50" required />
+                                        <input type="date" name="to_be_launched" value={formData.to_be_launched} onChange={handleChange} disabled={!isTeacher} className="input input-bordered bg-gray-50" required />
                                     </div>
                                     <div className="form-control">
                                         <label className="label-text font-semibold mb-1 text-gray-500 text-xs uppercase">Prazo de Entrega</label>
-                                        <input type="datetime-local" name="due_date" value={formData.due_date} onChange={handleChange} disabled={!isTeacher} className="input input-bordered bg-gray-50" required />
+                                        <input type="date" name="due_date" value={formData.due_date} onChange={handleChange} disabled={!isTeacher} className="input input-bordered bg-gray-50" required />
                                     </div>
                                 </div>
 
@@ -253,7 +257,7 @@ export default function ActivityEditor() {
                                                 <span className="text-sm font-medium">Ativa</span>
                                             </label>
                                         </div>
-                                        <button type="submit" className="btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-100 mt-2" disabled={isLoading}>
+                                        <button type="submit" className="btn btn-outline border-blue-500 text-blue-500 hover:bg-blue-50 hover:border-blue-500 mt-2" disabled={isLoading}>
                                             {activityId ? 'Salvar Alterações' : 'Iniciar Rascunho'}
                                         </button>
                                     </>
@@ -307,7 +311,7 @@ export default function ActivityEditor() {
                                         {isTeacher && (
                                             <div className="flex flex-col sm:flex-row gap-3 items-center bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300">
                                                 <input type="file" id="file-upload" onChange={handleFileChange} className="file-input file-input-sm file-input-bordered w-full bg-white" />
-                                                <button onClick={handleFileUpload} disabled={!selectedFile || isUploading} className="btn btn-sm bg-[#621708] text-white hover:bg-black w-full sm:w-auto border-none">
+                                                <button onClick={handleFileUpload} disabled={!selectedFile || isUploading} className="btn btn-sm bg-blue-500 text-white hover:bg-blue-600 w-full sm:w-auto border-none">
                                                     {isUploading ? 'Enviando...' : 'Anexar Arquivo'}
                                                 </button>
                                             </div>
@@ -327,7 +331,7 @@ export default function ActivityEditor() {
                                 {/* BOTÃO DO ALUNO */}
                                 {!isTeacher && formData.has_submission && status === 'PUB' && (
                                     <div className="flex justify-end mt-4">
-                                        <button className="btn bg-[#621708] text-white hover:bg-black border-none px-12 py-4 h-auto text-lg shadow-lg">
+                                        <button className="btn bg-blue-500 text-white hover:bg-blue-600 border-none px-12 py-4 h-auto text-lg shadow-lg">
                                             Responder e Enviar Trabalho
                                         </button>
                                     </div>

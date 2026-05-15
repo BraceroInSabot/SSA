@@ -4,9 +4,11 @@ interface QuestionListProps {
     questions: QuestionDefinition[];
     onEdit: (question: QuestionDefinition) => void;
     onDelete: (id: string) => void;
+    onMoveUp: (index: number) => void;
+    onMoveDown: (index: number) => void;
 }
 
-export default function QuestionList({ questions, onEdit, onDelete }: QuestionListProps) {
+export default function QuestionList({ questions, onEdit, onDelete, onMoveUp, onMoveDown }: QuestionListProps) {
     if (questions.length === 0) {
         return (
             <div className="p-8 text-center text-gray-400 italic bg-gray-50 rounded-lg border border-gray-100">
@@ -19,13 +21,33 @@ export default function QuestionList({ questions, onEdit, onDelete }: QuestionLi
         <div className="flex flex-col gap-3">
             {questions.map((q, index) => (
                 <div key={q.question_id || index} className="group flex justify-between items-center p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-all shadow-sm">
-                    <div className="flex flex-col gap-1 max-w-[70%]">
-                        <div className="flex items-center gap-2">
-                            <span className="badge badge-sm bg-gray-800 text-white">Q{index + 1}</span>
-                            <span className="text-xs font-bold uppercase text-blue-600">{q.question_type}</span>
+                    <div className="flex items-center gap-4 max-w-[70%]">
+                        <div className="flex flex-col gap-1">
+                            <button 
+                                onClick={() => onMoveUp(index)} 
+                                disabled={index === 0}
+                                className={`btn btn-square btn-ghost btn-xs ${index === 0 ? 'opacity-30' : 'text-gray-500 hover:text-blue-600'}`}
+                                title="Mover para Cima"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                            </button>
+                            <button 
+                                onClick={() => onMoveDown(index)} 
+                                disabled={index === questions.length - 1}
+                                className={`btn btn-square btn-ghost btn-xs ${index === questions.length - 1 ? 'opacity-30' : 'text-gray-500 hover:text-blue-600'}`}
+                                title="Mover para Baixo"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
                         </div>
-                        <p className="text-gray-700 font-medium line-clamp-2">{q.question_description}</p>
-                        <span className="text-xs text-gray-500">Valor: <b className="text-green-700">{q.question_expected_result} pts</b></span>
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <span className="badge badge-sm bg-gray-800 text-white">Q{index + 1}</span>
+                                <span className="text-xs font-bold uppercase text-blue-600">{q.question_type}</span>
+                            </div>
+                            <p className="text-gray-700 font-medium line-clamp-2">{q.question_description}</p>
+                            <span className="text-xs text-gray-500">Valor: <b className="text-green-700">{q.question_expected_result} pts</b></span>
+                        </div>
                     </div>
                     
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

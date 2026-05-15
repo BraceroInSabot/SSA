@@ -16,7 +16,7 @@ function AsideMenu({ courses, selectedCourseId, onCourseSelected, onCourseCreate
 
     const [courseName, setCourseName] = useState('');
     const [courseYear, setCourseYear] = useState(new Date().getFullYear());
-    const [color, setColor] = useState('#621708');
+    const [color, setColor] = useState('#3B82F6');
     const [isLoading, setIsLoading] = useState(false);
 
     const openModal = () => modalRef.current?.showModal();
@@ -25,7 +25,7 @@ function AsideMenu({ courses, selectedCourseId, onCourseSelected, onCourseCreate
         modalRef.current?.close();
         setCourseName('');
         setCourseYear(new Date().getFullYear());
-        setColor('#621708');
+        setColor('#3B82F6');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +136,7 @@ function AsideMenu({ courses, selectedCourseId, onCourseSelected, onCourseCreate
                             </button>
                             <button 
                                 type="submit" 
-                                className="btn bg-[#621708] hover:bg-red-900 text-white border-none"
+                                className="btn bg-[#1E3A8A] hover:bg-blue-600 text-white border-none"
                                 disabled={isLoading}
                             >
                                 {isLoading ? 'Salvando...' : 'Salvar Curso'}

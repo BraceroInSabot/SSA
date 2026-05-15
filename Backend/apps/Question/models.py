@@ -13,6 +13,7 @@ class Question(models.Model):
     question_id = models.UUIDField(primary_key=True, editable=False, default=uuid4, db_column='question_PK')
     question_description = models.TextField(db_column='question_description')
     question_expected_result = models.FloatField(db_column='question_expected_result', default=0.0)
+    question_order = models.IntegerField(db_column='question_order', default=0)
     question_type = models.CharField(choices=QuestionType.choices, db_column='question_type', max_length=2)
     activity = models.ManyToManyField('Activity.Activity', related_name='questions', db_column='question_activity_FK')
     question_response = models.JSONField(db_column='question_response', default=dict)

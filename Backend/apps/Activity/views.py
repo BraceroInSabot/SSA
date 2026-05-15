@@ -79,16 +79,6 @@ class ActivityViewSet(
         if activity.status == Activity.ActivityStatus.PUBLISHED:
             raise ValidationError({"detail": "This activity is already published."})
 
-        if activity.activity_type == Activity.ActivityType.TST:            
-            total_pesos = activity.questions.aggregate(
-                total=Sum('question_expected_result')
-            )['total'] or 0
-            
-            if total_pesos != activity.total_grade and activity.questions.exists():
-                 raise ValidationError({
-                    "detail": f"The sum of question weights ({total_pesos}) differs from the total grade ({activity.total_grade})."
-                })
-
         activity.status = Activity.ActivityStatus.PUBLISHED
         activity.save()
 
@@ -130,7 +120,7 @@ class ListActivityQuestionsView(ListModelMixin, GenericViewSet):
 
     def get_queryset(self):
         activity_id = self.kwargs.get('pk')
-        return Question.objects.filter(activity=activity_id)
+        return Question.objects.filter(activity=activity_id).order_by('question_order')
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

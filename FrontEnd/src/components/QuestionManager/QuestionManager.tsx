@@ -33,12 +33,16 @@ export default function QuestionManager({ activityId }: QuestionManagerProps) {
         try {
             if (editingQuestion?.question_id) {
                 // UPDATE
-                await api.put(`/question/update/${editingQuestion.question_id}/`, questionData);
+                await api.put(`/question/update/${editingQuestion.question_id}/`, {
+                    ...questionData,
+                    question_order: editingQuestion.question_order
+                });
             } else {
                 // CREATE
                 await api.post(`/question/create/`, {
                     ...questionData,
-                    activity: [activityId]
+                    activity: [activityId],
+                    question_order: questions.length
                 });
             }
             setEditingQuestion(null);
@@ -58,6 +62,35 @@ export default function QuestionManager({ activityId }: QuestionManagerProps) {
         }
     };
 
+    const handleMoveQuestion = async (index: number, direction: 'up' | 'down') => {
+        if ((direction === 'up' && index === 0) || (direction === 'down' && index === questions.length - 1)) return;
+
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        const newQuestions = [...questions];
+        
+        // Swap locally
+        const temp = newQuestions[index];
+        newQuestions[index] = newQuestions[newIndex];
+        newQuestions[newIndex] = temp;
+        
+        // Update local orders
+        newQuestions[index].question_order = index;
+        newQuestions[newIndex].question_order = newIndex;
+        
+        setQuestions(newQuestions);
+
+        // Sync with backend
+        try {
+            await Promise.all([
+                api.put(`/question/update/${newQuestions[index].question_id}/`, newQuestions[index]),
+                api.put(`/question/update/${newQuestions[newIndex].question_id}/`, newQuestions[newIndex])
+            ]);
+        } catch (error) {
+            alert("Erro ao reordenar questões no servidor.");
+            fetchQuestions(); // Revert on failure
+        }
+    };
+
     return (
         <section className="flex flex-col gap-6 w-full bg-white p-4 rounded-lg shadow-sm border">
             <h3 className="text-xl font-bold text-gray-800">Questões da Atividade</h3>
@@ -68,7 +101,9 @@ export default function QuestionManager({ activityId }: QuestionManagerProps) {
                 <QuestionList 
                     questions={questions} 
                     onEdit={(q) => setEditingQuestion(q)} 
-                    onDelete={handleDeleteQuestion} 
+                    onDelete={handleDeleteQuestion}
+                    onMoveUp={(index) => handleMoveQuestion(index, 'up')}
+                    onMoveDown={(index) => handleMoveQuestion(index, 'down')}
                 />
             )}
 
