@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { retrieveActivity } from '../services/ActivityCrud';
 import { api } from '../services/api';
@@ -14,6 +14,9 @@ export default function ActivityResponder() {
     
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; message: string; onConfirm: () => void } | null>(null);
 
     useEffect(() => {
         const loadActivityData = async () => {
@@ -21,27 +24,26 @@ export default function ActivityResponder() {
             try {
                 const actData = await retrieveActivity(id);
                 setActivity(actData);
-
                 const qRes = await api.get(`/activities/${id}/questions/`);
                 setQuestions(qRes.data);
             } catch (error) {
-                alert("Erro ao carregar a prova. Verifique sua conexão.");
-                navigate('/atividades');
+                setToast({ message: "Erro ao carregar a prova. Verifique sua conexão.", type: 'error' });
+                setTimeout(() => navigate('/atividades'), 3000);
             } finally {
                 setIsLoading(false);
             }
         };
         loadActivityData();
-    }, [id]);
+    }, [id, navigate]);
 
-    const handleAnswerChange = (questionId: string, value: any) => {
+    const handleAnswerChange = useCallback((questionId: string, value: any) => {
         setAnswers(prev => ({
             ...prev,
             [questionId]: value
         }));
-    };
+    }, []);
 
-    const handleTFChange = (questionId: string, optionId: string, isTrue: boolean) => {
+    const handleTFChange = useCallback((questionId: string, optionId: string, isTrue: boolean) => {
         setAnswers(prev => {
             const currentQuestionAnswers = prev[questionId] || {};
             return {
@@ -52,35 +54,21 @@ export default function ActivityResponder() {
                 }
             };
         });
-    };
+    }, []);
 
-    const handleMCChange = (questionId: string, optionId: string, checked: boolean) => {
+    const handleMCChange = useCallback((questionId: string, optionId: string, checked: boolean) => {
         setAnswers(prev => {
             const currentAnswers = prev[questionId] || [];
             if (checked) {
                 return { ...prev, [questionId]: [...currentAnswers, optionId] };
             } else {
-                return { ...prev, [questionId]: currentAnswers.filter((id: string) => id !== optionId) };
+                return { ...prev, [questionId]: currentAnswers.filter((idStr: string) => idStr !== optionId) };
             }
         });
-    };
+    }, []);
 
-    const handleSubmit = async () => {
+    const executeSubmission = async () => {
         if (!id) return;
-        
-        const unanswered = questions.filter(q => {
-            const ans = answers[q.question_id!];
-            if (ans === undefined || ans === null || ans === '') return true;
-            if (q.question_type === 'TF' && Object.keys(ans).length !== (q.question_options?.length || 0)) return true;
-            if (q.question_type === 'MC' && ans.length === 0) return true;
-            return false;
-        });
-
-        if (unanswered.length > 0) {
-            const confirmEmpty = window.confirm(`Você deixou ${unanswered.length} questão(ões) incompletas ou em branco. Deseja enviar mesmo assim?`);
-            if (!confirmEmpty) return;
-        }
-
         setIsSubmitting(true);
         
         const formData = new FormData();
@@ -108,42 +96,82 @@ export default function ActivityResponder() {
                 }
             }
 
-            // O modelo de dados limpo para o Django processar
             jsonPayload.push({
                 submission_question: q.question_id!,
                 activity: id,
                 submission: responseJson
             });
 
-            // Anexa o arquivo fisicamente ao FormData, mapeado pelo ID da questão
             if (fileToUpload) {
                 formData.append(`file_${q.question_id!}`, fileToUpload);
             }
         });
 
-        // Converte todo o array estruturado em uma única string JSON para burlar a limitação do FormData
         formData.append('data', JSON.stringify(jsonPayload));
 
         try {
-            // Como mudamos para FormData, enviamos direto pela API para garantir os headers corretos
             await api.post(`/activities/${id}/submit/`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            alert("Trabalho enviado com sucesso!");
-            navigate(`/atividade/consulta/${id}`);
+            setToast({ message: "Trabalho enviado com sucesso!", type: 'success' });
+            setTimeout(() => navigate(`/atividade/consulta/${id}`), 2000);
         } catch (error) {
-            alert("Erro ao enviar trabalho. Tente novamente.");
-        } finally {
+            setToast({ message: "Erro ao enviar trabalho. Tente novamente.", type: 'error' });
             setIsSubmitting(false);
         }
     };
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#F2F5F7]"><span className="loading loading-spinner loading-lg text-[#621708]"></span></div>;
+    const handleSubmit = () => {
+        const unanswered = questions.filter(q => {
+            const ans = answers[q.question_id!];
+            if (ans === undefined || ans === null || ans === '') return true;
+            if (q.question_type === 'TF' && Object.keys(ans).length !== (q.question_options?.length || 0)) return true;
+            if (q.question_type === 'MC' && ans.length === 0) return true;
+            return false;
+        });
+
+        if (unanswered.length > 0) {
+            setConfirmModal({
+                isOpen: true,
+                message: `Você deixou ${unanswered.length} questão(ões) incompletas ou em branco. Deseja enviar mesmo assim?`,
+                onConfirm: () => {
+                    setConfirmModal(null);
+                    executeSubmission();
+                }
+            });
+            return;
+        }
+
+        executeSubmission();
+    };
+
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]"><span className="loading loading-spinner loading-lg text-[#1E3A8A]"></span></div>;
     if (!activity) return null;
 
     return (
-        <div className="min-h-screen bg-[#F2F5F7] pb-20">
-            <header className="bg-[#621708] text-white py-4 px-6 sticky top-0 z-50 shadow-md">
+        <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans text-[#0F172A]">
+            {toast && (
+                <div className="toast toast-top toast-end z-[100]">
+                    <div className={`alert ${toast.type === 'success' ? 'alert-success bg-[#14B8A6] text-white' : 'alert-error bg-[#F97316] text-white'}`}>
+                        <span>{toast.message}</span>
+                    </div>
+                </div>
+            )}
+
+            {confirmModal?.isOpen && (
+                <div className="fixed inset-0 bg-[#0F172A] bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-[#FFFFFF] p-6 rounded-lg shadow-xl max-w-md w-full border border-[#E2E8F0]">
+                        <h3 className="text-lg font-bold text-[#1E3A8A] mb-4">Atenção</h3>
+                        <p className="text-[#0F172A] mb-6">{confirmModal.message}</p>
+                        <div className="flex justify-end gap-4">
+                            <button onClick={() => setConfirmModal(null)} className="btn btn-outline border-[#3B82F6] text-[#3B82F6] hover:bg-[#F8FAFC]">Cancelar</button>
+                            <button onClick={confirmModal.onConfirm} className="btn bg-[#F59E0B] hover:bg-[#D97706] text-white border-none">Enviar mesmo assim</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <header className="bg-[#1E3A8A] text-[#FFFFFF] py-4 px-6 sticky top-0 z-40 shadow-md">
                 <div className="max-w-4xl mx-auto flex justify-between items-center">
                     <div>
                         <h1 className="text-xl font-bold truncate">{activity.name}</h1>
@@ -153,7 +181,7 @@ export default function ActivityResponder() {
                         <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">
                             {Object.keys(answers).length} / {questions.length} Respondidas
                         </span>
-                        <button onClick={() => navigate(-1)} className="btn btn-sm btn-ghost text-white">Sair</button>
+                        <button onClick={() => navigate(-1)} className="btn btn-sm btn-ghost text-[#FFFFFF] hover:bg-white/10">Sair</button>
                     </div>
                 </div>
             </header>
@@ -164,13 +192,13 @@ export default function ActivityResponder() {
                     const currentAnswer = answers[q.question_id!];
 
                     return (
-                        <div key={q.question_id} className="card bg-white shadow-sm border border-gray-200">
+                        <div key={q.question_id} className="card bg-[#FFFFFF] shadow-sm border border-[#E2E8F0]">
                             <div className="card-body p-6 md:p-8">
-                                <div className="flex gap-4 border-b border-gray-100 pb-4 mb-6">
-                                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 font-bold text-gray-700 shrink-0">
+                                <div className="flex gap-4 border-b border-[#F8FAFC] pb-4 mb-6">
+                                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#F8FAFC] font-bold text-[#1E3A8A] shrink-0 border border-[#E2E8F0]">
                                         {index + 1}
                                     </span>
-                                    <h3 className="text-lg font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                    <h3 className="text-lg font-medium text-[#0F172A] leading-relaxed whitespace-pre-wrap">
                                         {q.question_description}
                                     </h3>
                                 </div>
@@ -179,10 +207,10 @@ export default function ActivityResponder() {
                                     {q.question_type === 'UC' && (
                                         <div className="flex flex-col gap-3">
                                             {questionOptions.map((opt: any) => (
-                                                <label key={opt.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${currentAnswer === opt.id ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50 border-transparent'}`}>
-                                                    <input type="radio" name={`uc_${q.question_id}`} checked={currentAnswer === opt.id} onChange={() => handleAnswerChange(q.question_id!, opt.id)} className="radio radio-primary mt-0.5" />
-                                                    <span className="text-gray-700">
-                                                        <strong className="mr-2 text-gray-400">{opt.id})</strong>
+                                                <label key={opt.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${currentAnswer === opt.id ? 'bg-[#F8FAFC] border-[#3B82F6]' : 'hover:bg-[#F8FAFC] border-transparent'}`}>
+                                                    <input type="radio" name={`uc_${q.question_id}`} checked={currentAnswer === opt.id} onChange={() => handleAnswerChange(q.question_id!, opt.id)} className="radio radio-primary mt-0.5 border-[#CBD5E1]" />
+                                                    <span className="text-[#0F172A]">
+                                                        <strong className="mr-2 text-[#3B82F6] opacity-80">{opt.id})</strong>
                                                         {opt.text}
                                                     </span>
                                                 </label>
@@ -193,29 +221,29 @@ export default function ActivityResponder() {
                                     {q.question_type === 'MC' && (
                                         <div className="flex flex-col gap-3">
                                             {questionOptions.map((opt: any) => (
-                                                <label key={opt.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${(currentAnswer || []).includes(opt.id) ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50 border-transparent'}`}>
-                                                    <input type="checkbox" checked={(currentAnswer || []).includes(opt.id)} onChange={(e) => handleMCChange(q.question_id!, opt.id, e.target.checked)} className="checkbox checkbox-primary mt-0.5" />
-                                                    <span className="text-gray-700">
-                                                        <strong className="mr-2 text-gray-400">{opt.id})</strong>
+                                                <label key={opt.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${(currentAnswer || []).includes(opt.id) ? 'bg-[#F8FAFC] border-[#3B82F6]' : 'hover:bg-[#F8FAFC] border-transparent'}`}>
+                                                    <input type="checkbox" checked={(currentAnswer || []).includes(opt.id)} onChange={(e) => handleMCChange(q.question_id!, opt.id, e.target.checked)} className="checkbox checkbox-primary mt-0.5 border-[#CBD5E1]" />
+                                                    <span className="text-[#0F172A]">
+                                                        <strong className="mr-2 text-[#3B82F6] opacity-80">{opt.id})</strong>
                                                         {opt.text}
                                                     </span>
                                                 </label>
                                             ))}
-                                            <span className="text-xs text-gray-400 mt-2">* Selecione uma ou mais opções.</span>
+                                            <span className="text-xs text-[#0F172A] opacity-60 mt-2">* Selecione uma ou mais opções.</span>
                                         </div>
                                     )}
 
                                     {q.question_type === 'TF' && (
                                         <div className="flex flex-col gap-4">
                                             {questionOptions.map((opt: any) => (
-                                                <div key={opt.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-lg border border-gray-100 bg-gray-50">
-                                                    <span className="text-gray-700 flex-1">
-                                                        <strong className="mr-2 text-gray-500">{opt.id}.</strong>
+                                                <div key={opt.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC]">
+                                                    <span className="text-[#0F172A] flex-1">
+                                                        <strong className="mr-2 text-[#3B82F6] opacity-80">{opt.id}.</strong>
                                                         {opt.text}
                                                     </span>
-                                                    <div className="join shrink-0">
-                                                        <input type="radio" aria-label="Verdadeiro" className="join-item btn btn-sm bg-white hover:bg-green-50 checked:bg-green-500 checked:text-white border-gray-300" checked={currentAnswer?.[opt.id] === true} onChange={() => handleTFChange(q.question_id!, opt.id, true)} />
-                                                        <input type="radio" aria-label="Falso" className="join-item btn btn-sm bg-white hover:bg-red-50 checked:bg-red-500 checked:text-white border-gray-300" checked={currentAnswer?.[opt.id] === false} onChange={() => handleTFChange(q.question_id!, opt.id, false)} />
+                                                    <div className="join shrink-0 shadow-sm">
+                                                        <input type="radio" aria-label="Verdadeiro" className="join-item btn btn-sm bg-[#FFFFFF] hover:bg-[#F8FAFC] checked:bg-[#3B82F6] checked:text-[#FFFFFF] border-[#E2E8F0]" checked={currentAnswer?.[opt.id] === true} onChange={() => handleTFChange(q.question_id!, opt.id, true)} />
+                                                        <input type="radio" aria-label="Falso" className="join-item btn btn-sm bg-[#FFFFFF] hover:bg-[#F8FAFC] checked:bg-[#F59E0B] checked:text-[#FFFFFF] border-[#E2E8F0]" checked={currentAnswer?.[opt.id] === false} onChange={() => handleTFChange(q.question_id!, opt.id, false)} />
                                                     </div>
                                                 </div>
                                             ))}
@@ -227,20 +255,19 @@ export default function ActivityResponder() {
                                             value={currentAnswer || ''}
                                             onChange={(e) => handleAnswerChange(q.question_id!, e.target.value)}
                                             placeholder="Digite sua resposta aqui..."
-                                            className="textarea textarea-bordered w-full h-40 bg-gray-50 focus:bg-white text-base leading-relaxed"
+                                            className="textarea textarea-bordered w-full h-40 bg-[#F8FAFC] focus:bg-[#FFFFFF] text-base leading-relaxed border-[#E2E8F0] focus:ring-2 focus:ring-[#3B82F6] text-[#0F172A]"
                                         />
                                     )}
 
-                                    {/* NOVA INTERFACE: File Upload */}
                                     {q.question_type === 'FL' && (
                                         <div className="flex flex-col gap-3">
                                             <input 
                                                 type="file" 
                                                 onChange={(e) => handleAnswerChange(q.question_id!, e.target.files ? e.target.files[0] : null)}
-                                                className="file-input file-input-bordered w-full max-w-md bg-white text-gray-700"
+                                                className="file-input file-input-bordered w-full max-w-md bg-[#FFFFFF] text-[#0F172A] border-[#E2E8F0] focus:ring-2 focus:ring-[#3B82F6]"
                                             />
                                             {currentAnswer instanceof File && (
-                                                <div className="text-sm font-medium text-green-700 bg-green-50 border border-green-200 p-3 rounded-md max-w-md truncate">
+                                                <div className="text-sm font-medium text-[#1E3A8A] bg-[#F8FAFC] border border-[#3B82F6] p-3 rounded-md max-w-md truncate">
                                                     ✓ Arquivo anexado: {currentAnswer.name}
                                                 </div>
                                             )}
@@ -252,11 +279,11 @@ export default function ActivityResponder() {
                     );
                 })}
 
-                <div className="flex justify-end mt-8 border-t border-gray-300 pt-8">
+                <div className="flex justify-end mt-8 border-t border-[#E2E8F0] pt-8">
                     <button 
                         onClick={handleSubmit} 
                         disabled={isSubmitting}
-                        className="btn bg-[#621708] hover:bg-black text-white px-12 h-14 text-lg border-none shadow-xl"
+                        className="btn bg-[#3B82F6] hover:bg-[#1E3A8A] text-[#FFFFFF] px-12 h-14 text-lg border-none shadow-md transition-colors disabled:bg-[#CBD5E1]"
                     >
                         {isSubmitting ? <span className="loading loading-spinner"></span> : 'Finalizar Prova e Enviar'}
                     </button>

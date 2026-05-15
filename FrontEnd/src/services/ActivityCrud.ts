@@ -26,7 +26,7 @@ const uploadActivityFile = async (activity_id: string, file: File) => {
     formData.append('file', file);
     formData.append('activity', activity_id);
 
-    const response = await api.post(`activities/upload-file/${activity_id}/`, formData, {
+    const response = await api.post(`activities/${activity_id}/upload-file/`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },

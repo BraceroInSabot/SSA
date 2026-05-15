@@ -98,6 +98,17 @@ class ActivityViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['delete'], url_path=r'detach-file/(?P<file_id>[^/.]+)')
+    def detach_file(self, request, file_id=None) -> Response:
+        """
+        Removes an attached file from an activity.
+        Route automatically generated: DELETE /activities/detach-file/{file_id}/
+        """
+        from apps.Activity.models import Activity_Attached_Files
+        attached_file = get_object_or_404(Activity_Attached_Files, pk=file_id)
+        attached_file.delete()
+        return Response({"detail": "File removed successfully."}, status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=True, methods=['post'], url_path='submit')
     def submit(self, request, pk=None) -> Response:
