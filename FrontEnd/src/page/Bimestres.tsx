@@ -95,6 +95,7 @@ export default function Bimestres() {
         e.preventDefault();
         setIsSavingCourse(true);
         try {
+            //@ts-ignore
             await createCourse(courseFormData);
             setIsCourseModalOpen(false);
             setCourseFormData({ course_name: '', course_year: new Date().getFullYear(), color: '#1E3A8A' });
