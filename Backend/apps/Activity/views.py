@@ -62,7 +62,15 @@ class ActivityViewSet(
         course_id = self.request.query_params.get('course_id') # type: ignore
         if course_id:
             target_course = get_object_or_404(Course, pk=course_id, is_active=True)
-            return queryset.filter(course=target_course)
+            queryset = queryset.filter(course=target_course)
+            
+        bimestre_id = self.request.query_params.get('bimestre_id')
+        if bimestre_id:
+            queryset = queryset.filter(course__bimestre_id=bimestre_id)
+            
+        name = self.request.query_params.get('name')
+        if name:
+            queryset = queryset.filter(name__icontains=name)
             
         return queryset
 

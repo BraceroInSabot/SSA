@@ -4,7 +4,9 @@ import { useAuth } from '../contexts/AuthContext';
 import NavBar from '../components/NavBar/NavBar';
 import QuestionManager from '../components/QuestionManager/QuestionManager';
 import { createActivity, retrieveActivity, updateActivity, uploadActivityFile, detachActivityFile } from '../services/ActivityCrud';
+import { listCourses } from '../services/CourseCrud';
 import { api } from '../services/api';
+import type { Course } from '../types/Courses';
 
 export default function ActivityEditor() {
     const { id } = useParams<{ id: string }>();
@@ -15,8 +17,8 @@ export default function ActivityEditor() {
     const [activityId, setActivityId] = useState<string | null>(id || null);
     const [status, setStatus] = useState<string>('DRF');
     const [isLoading, setIsLoading] = useState(false);
-    const courseId = location.state?.courseId;
-
+    const [courses, setCourses] = useState<Course[]>([]);
+    
     const today = new Date();
     const nextWeek = new Date(today);
     nextWeek.setDate(today.getDate() + 7);
@@ -30,7 +32,8 @@ export default function ActivityEditor() {
         total_grade: 1,
         activity_type: 'TST',
         is_active: true,
-        has_submission: true
+        has_submission: true,
+        course: location.state?.courseId || ''
     });
 
     // Gerenciamento de Arquivos
@@ -45,6 +48,15 @@ export default function ActivityEditor() {
         return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     };
 
+    const fetchCourses = async () => {
+        try {
+            const response = await listCourses();
+            setCourses(response);
+        } catch (error) {
+            console.error("Erro ao carregar cursos", error);
+        }
+    };
+
     const loadActivity = async (targetId: string) => {
         try {
             const res = await retrieveActivity(targetId);
@@ -57,7 +69,9 @@ export default function ActivityEditor() {
                 total_grade: res.total_grade,
                 activity_type: res.activity_type,
                 is_active: res.is_active,
-                has_submission: res.has_submission
+                has_submission: res.has_submission,
+                //@ts-ignore
+                course: res.course
             });
             setStatus(res.status || 'DRF');
             setAttachedFiles(res.attached_files || []);
@@ -69,7 +83,8 @@ export default function ActivityEditor() {
 
     useEffect(() => {
         if (id) loadActivity(id);
-    }, [id]);
+        if (user?.is_teacher && !id) fetchCourses();
+    }, [id, user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -86,7 +101,6 @@ export default function ActivityEditor() {
 
         const payload = {
             ...formData,
-            course: courseId || '',
             to_be_launched: new Date(formData.to_be_launched).toISOString(),
             due_date: new Date(formData.due_date).toISOString(),
         };
@@ -97,14 +111,14 @@ export default function ActivityEditor() {
                 await updateActivity(activityId, payload);
                 // Feedback silencioso ou toast poderia entrar aqui
             } else {
-                if (!courseId) throw new Error("Curso não identificado.");
+                if (!formData.course) throw new Error("Curso não selecionado.");
                 const res = await createActivity(payload as any);
                 setActivityId(res.activity_id);
                 setStatus('DRF');
                 window.history.replaceState(null, '', `/atividade/editar/${res.activity_id}`);
             }
-        } catch (err) {
-            alert("Erro ao salvar os dados da atividade.");
+        } catch (err: any) {
+            alert(err.message || "Erro ao salvar os dados da atividade.");
         } finally {
             setIsLoading(false);
         }
@@ -201,6 +215,24 @@ export default function ActivityEditor() {
                             <div className="card-body p-6 gap-4">
                                 <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Detalhes Gerais</h2>
                                 
+                                {isTeacher && !activityId && (
+                                    <div className="form-control">
+                                        <label className="label-text font-semibold mb-1 text-gray-700">Disciplina (Curso)</label>
+                                        <select 
+                                            name="course" 
+                                            value={formData.course} 
+                                            onChange={handleChange} 
+                                            className="select select-bordered w-full bg-gray-50 text-gray-800 font-medium"
+                                            required
+                                        >
+                                            <option value="" disabled>Selecione a disciplina...</option>
+                                            {courses.map(course => (
+                                                <option key={course.course_id} value={course.course_id}>{course.course_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
                                 <div className="form-control">
                                     <label className="label-text font-semibold mb-1 text-gray-700">Título</label>
                                     <input name="name" value={formData.name} onChange={handleChange} disabled={!isTeacher} className="input input-bordered bg-gray-50 text-gray-800" required />

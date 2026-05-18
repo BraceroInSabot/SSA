@@ -27,7 +27,7 @@ export default function MainMenu({ activities, selectedCourseId }: MainMenuProps
         return (
             <main className="w-full flex flex-col gap-4">
                 <div className="card bg-white shadow-sm border border-gray-200 p-6 text-center text-gray-500">
-                    Selecione um curso para gerenciar atividades.
+                    Selecione um bimestre para visualizar as atividades.
                 </div>
             </main>
         );
@@ -46,7 +46,7 @@ export default function MainMenu({ activities, selectedCourseId }: MainMenuProps
     return (
         <main className="w-full flex flex-col gap-4">
             <div className="flex justify-between items-center mb-2 px-2">
-                <h2 className="text-xl font-bold text-gray-800">Atividades do Curso</h2>
+                <h2 className="text-xl font-bold text-gray-800">Atividades</h2>
                 
                 {user?.is_teacher && (
                     <button 

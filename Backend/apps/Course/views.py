@@ -1,12 +1,27 @@
 from django.db.models.query import QuerySet
 
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from ..core.permissions import IsTeacher
-from .models import Course
-from .serializer import CourseSerializer
+from .models import Course, Bimestre
+from .serializer import CourseSerializer, BimestreSerializer
+
+class BimestreViewSet(ModelViewSet):
+    """
+    Unified REST controller for the Bimestre resource.
+    Exposes Full CRUD operations.
+    """
+    serializer_class = BimestreSerializer
+    queryset = Bimestre.objects.all()
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated, IsTeacher]
+        return [permission() for permission in permission_classes]
 
 class CourseViewSet(
     CreateModelMixin,

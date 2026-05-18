@@ -6,6 +6,7 @@ import ActivityEditor from '../page/ActivityEditor';
 import ActivityResponder from '../page/ActivityResponder';
 import ActivityEvaluator from '../page/ActivityEvaluator';
 import ProfilePage from '../page/Profile';
+import Bimestres from '../page/Bimestres';
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
   {
     path: '/perfil',
     element: <ProfilePage />,
+  },
+  {
+    path: '/bimestres',
+    element: <Bimestres />,
   }
 ]);
 

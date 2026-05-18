@@ -1,8 +1,16 @@
 import { api } from './api';
 import { type Activity } from '../types/Activity';
 
-const listActivities = async (course_id: string) => {
-    const response = await api.get(`activities/?course_id=${course_id}`);
+const listActivities = async (filters?: { course_id?: string; bimestre_id?: string; name?: string }) => {
+    let query = '';
+    if (filters) {
+        const params = new URLSearchParams();
+        if (filters.course_id) params.append('course_id', filters.course_id);
+        if (filters.bimestre_id) params.append('bimestre_id', filters.bimestre_id);
+        if (filters.name) params.append('name', filters.name);
+        query = `?${params.toString()}`;
+    }
+    const response = await api.get(`activities/${query}`);
     return response.data as Activity[];
 };
 
