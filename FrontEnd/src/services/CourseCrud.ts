@@ -6,7 +6,7 @@ const listCourses = async () => {
     return response.data as Course[];
 };
 
-const retrieveCourse = async (courseID: number) => {
+const retrieveCourse = async (courseID: string) => {
     const response = await api.get(`courses/${courseID}/`);
     return response.data as Course;
 };
@@ -16,8 +16,26 @@ const createCourse = async (courseData: { course_name: string; course_year: stri
     return response.data as Course;
 };
 
+const updateCourse = async (courseID: string, courseData: Partial<Course>) => {
+    const response = await api.patch(`courses/${courseID}/`, courseData);
+    return response.data as Course;
+};
+
+const deleteCourse = async (courseID: string) => {
+    const response = await api.delete(`courses/${courseID}/`);
+    return response.data;
+};
+
+const getCourseAnalytics = async (courseID: string) => {
+    const response = await api.get(`courses/${courseID}/analytics/`);
+    return response.data;
+};
+
 export {
     listCourses,
     retrieveCourse,
     createCourse,
+    updateCourse,
+    deleteCourse,
+    getCourseAnalytics
 };

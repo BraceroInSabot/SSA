@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../components/NavBar/NavBar';
 import type { Bimestre } from '../types/Bimestre';
 import type { Course } from '../types/Courses';
@@ -6,6 +7,7 @@ import { listBimestres, createBimestre, updateBimestre, deleteBimestre } from '.
 import { listCourses } from '../services/CourseCrud';
 
 export default function Bimestres() {
+    const navigate = useNavigate();
     const [bimestres, setBimestres] = useState<Bimestre[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
@@ -101,6 +103,10 @@ export default function Bimestres() {
         }
     };
 
+    const getCourseInfo = (courseId: string) => {
+        return courses.find(c => c.course_id === courseId);
+    };
+
     return (
         <div className="flex bg-gray-100 min-h-screen">
             <NavBar />
@@ -120,11 +126,32 @@ export default function Bimestres() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {bimestres.map(bimestre => (
-                            <div key={bimestre.id} className="card bg-white shadow-lg p-6 rounded-xl border border-gray-200">
-                                <h2 className="text-xl font-bold text-gray-800 mb-2">{bimestre.name} - {bimestre.year}</h2>
-                                <p className="text-gray-600 mb-4">
-                                    Matérias vinculadas: {bimestre.courses.length}
-                                </p>
+                            <div key={bimestre.id} className="card bg-white shadow-lg p-6 rounded-xl border border-gray-200 flex flex-col h-full">
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-800 mb-2">{bimestre.name} - {bimestre.year}</h2>
+                                    <p className="text-sm font-semibold text-gray-500 mb-2">
+                                        Matérias vinculadas ({bimestre.courses.length}):
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 mb-6">
+                                        {bimestre.courses.map(courseId => {
+                                            const cInfo = getCourseInfo(courseId);
+                                            if (!cInfo) return null;
+                                            return (
+                                                <button
+                                                    key={courseId}
+                                                    onClick={() => navigate(`/curso/${courseId}`)}
+                                                    className="badge badge-outline border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6] hover:text-white cursor-pointer py-3 transition-colors"
+                                                    title="Ver Dashboard Analítico"
+                                                >
+                                                    {cInfo.course_name}
+                                                </button>
+                                            );
+                                        })}
+                                        {bimestre.courses.length === 0 && (
+                                            <span className="text-sm text-gray-400 italic">Nenhuma matéria vinculada.</span>
+                                        )}
+                                    </div>
+                                </div>
                                 <div className="flex gap-2 mt-auto">
                                     <button 
                                         onClick={() => handleOpenModal(bimestre)} 

@@ -7,6 +7,7 @@ import ActivityResponder from '../page/ActivityResponder';
 import ActivityEvaluator from '../page/ActivityEvaluator';
 import ProfilePage from '../page/Profile';
 import Bimestres from '../page/Bimestres';
+import CourseDetails from '../page/CourseDetails';
 
 const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
   {
     path: '/bimestres',
     element: <Bimestres />,
+  },
+  {
+    path: '/curso/:id',
+    element: <CourseDetails />,
   }
 ]);
 

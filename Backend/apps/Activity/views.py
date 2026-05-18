@@ -66,7 +66,7 @@ class ActivityViewSet(
             
         bimestre_id = self.request.query_params.get('bimestre_id')
         if bimestre_id:
-            queryset = queryset.filter(course__bimestre_id=bimestre_id)
+            queryset = queryset.filter(course__bimester_id=bimestre_id)
             
         name = self.request.query_params.get('name')
         if name:

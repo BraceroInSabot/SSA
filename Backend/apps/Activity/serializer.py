@@ -53,8 +53,21 @@ class ActivitySerializer(ModelSerializer):
         result: List[Dict[str, Any]] = []
         
         for sub in submissions:
+            if obj.activity_type == Activity.ActivityType.FIL:
+                result.append({
+                    "has_feedback": True, 
+                    "teacher_feedback": sub.teacher_feedback,
+                    "activity_final_grade": sub.submission_grade,
+                    "question_type": "FIL",
+                    "question_description": "Avaliação de Arquivo Anexo",
+                    "question_response": {"response": {"option": "Trabalho enviado via upload."}},
+                    "question_expected_result": {"expected_text": "Correção manual realizada pelo professor sobre o arquivo enviado."},
+                })
+                continue
+            
             question = sub.submission_question
             
+            print(question)
             # Architectural typing fix. Replacing the 4 '# type: ignore' hacks.
             assert question is not None, "A submission must be tied to a valid question."
             
