@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import NavBar from "../components/NavBar/NavBar";
 import MainMenu from '../components/Activity/MainMenu/MainMenu';
 import { listActivities } from '../services/ActivityCrud';
