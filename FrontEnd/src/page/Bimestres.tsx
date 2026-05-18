@@ -4,7 +4,7 @@ import NavBar from '../components/NavBar/NavBar';
 import type { Bimestre } from '../types/Bimestre';
 import type { Course } from '../types/Courses';
 import { listBimestres, createBimestre, updateBimestre, deleteBimestre } from '../services/BimestreCrud';
-import { listCourses } from '../services/CourseCrud';
+import { listCourses, createCourse } from '../services/CourseCrud';
 
 export default function Bimestres() {
     const navigate = useNavigate();
@@ -12,13 +12,24 @@ export default function Bimestres() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Estados do Modal de Bimestre
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBimestre, setEditingBimestre] = useState<Bimestre | null>(null);
     const [formData, setFormData] = useState({ name: '', year: new Date().getFullYear(), courses: [] as string[] });
 
+    // Estados do Modal de Deleção de Bimestre
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [bimestreToDelete, setBimestreToDelete] = useState<Bimestre | null>(null);
     const [deleteConfirmStep, setDeleteConfirmStep] = useState(1);
+
+    // Estados do Modal de Curso (Matéria)
+    const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+    const [isSavingCourse, setIsSavingCourse] = useState(false);
+    const [courseFormData, setCourseFormData] = useState({ 
+        course_name: '', 
+        course_year: new Date().getFullYear(), 
+        color: '#1E3A8A' 
+    });
 
     useEffect(() => {
         loadData();
@@ -80,6 +91,22 @@ export default function Bimestres() {
         }
     };
 
+    const handleSaveCourse = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSavingCourse(true);
+        try {
+            await createCourse(courseFormData);
+            setIsCourseModalOpen(false);
+            setCourseFormData({ course_name: '', course_year: new Date().getFullYear(), color: '#1E3A8A' });
+            loadData();
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao criar a matéria.");
+        } finally {
+            setIsSavingCourse(false);
+        }
+    };
+
     const handleOpenDelete = (bimestre: Bimestre) => {
         setBimestreToDelete(bimestre);
         setDeleteConfirmStep(1);
@@ -111,14 +138,23 @@ export default function Bimestres() {
         <div className="flex bg-gray-100 min-h-screen">
             <NavBar />
             <main className="flex-1 p-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h1 className="text-3xl font-bold text-[#1E3A8A]">Gerenciar Bimestres</h1>
-                    <button 
-                        onClick={() => handleOpenModal()} 
-                        className="btn bg-[#3B82F6] hover:bg-[#2563EB] text-white border-none"
-                    >
-                        Novo Bimestre
-                    </button>
+                    
+                    <div className="flex flex-wrap gap-3">
+                        <button 
+                            onClick={() => setIsCourseModalOpen(true)} 
+                            className="btn bg-white border-2 border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6] hover:border-[#3B82F6] hover:text-white shadow-sm"
+                        >
+                            + Criar Matéria
+                        </button>
+                        <button 
+                            onClick={() => handleOpenModal()} 
+                            className="btn bg-[#3B82F6] hover:bg-[#2563EB] text-white border-none shadow-md"
+                        >
+                            + Novo Bimestre
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -174,6 +210,8 @@ export default function Bimestres() {
                     </div>
                 )}
             </main>
+
+            {/* Bimestre Modal */}
             {isModalOpen && (
                 <div className="modal modal-open bg-black/50">
                     <div className="modal-box w-11/12 max-w-3xl bg-white text-gray-800 shadow-2xl border border-gray-100">
@@ -233,29 +271,81 @@ export default function Bimestres() {
                 </div>
             )}
 
+            {/* Course (Matéria) Modal */}
+            {isCourseModalOpen && (
+                <div className="modal modal-open bg-black/50">
+                    <div className="modal-box bg-white text-gray-800 shadow-2xl border border-gray-100 max-w-lg">
+                        <h3 className="font-bold text-xl text-gray-900 mb-4">Nova Matéria (Curso)</h3>
+                        <form onSubmit={handleSaveCourse} className="flex flex-col gap-4">
+                            <div className="form-control w-full">
+                                <label className="label"><span className="label-text font-semibold text-gray-600">Nome da Matéria</span></label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    className="input input-bordered w-full bg-white text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                                    value={courseFormData.course_name} 
+                                    onChange={e => setCourseFormData({ ...courseFormData, course_name: e.target.value })} 
+                                    placeholder="Ex: Engenharia de Software"
+                                />
+                            </div>
+                            
+                            <div className="flex gap-4">
+                                <div className="form-control flex-1">
+                                    <label className="label"><span className="label-text font-semibold text-gray-600">Ano Letivo</span></label>
+                                    <input 
+                                        type="number" 
+                                        required 
+                                        className="input input-bordered w-full bg-white text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                                        value={courseFormData.course_year} 
+                                        onChange={e => setCourseFormData({ ...courseFormData, course_year: parseInt(e.target.value) })} 
+                                    />
+                                </div>
+                                <div className="form-control w-32">
+                                    <label className="label"><span className="label-text font-semibold text-gray-600">Cor de Destaque</span></label>
+                                    <input 
+                                        type="color" 
+                                        required 
+                                        className="input input-bordered w-full h-12 p-1 bg-white cursor-pointer" 
+                                        value={courseFormData.color} 
+                                        onChange={e => setCourseFormData({ ...courseFormData, color: e.target.value })} 
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="modal-action mt-6">
+                                <button type="button" className="btn btn-ghost text-gray-500 hover:bg-gray-100" onClick={() => setIsCourseModalOpen(false)}>Cancelar</button>
+                                <button type="submit" disabled={isSavingCourse} className="btn bg-[#3B82F6] hover:bg-[#2563EB] text-white border-none shadow-md">
+                                    {isSavingCourse ? 'Salvando...' : 'Salvar Matéria'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Delete Confirmation Modal */}
             {deleteModalOpen && (
-                <div className="modal modal-open">
-                    <div className="modal-box">
+                <div className="modal modal-open bg-black/50">
+                    <div className="modal-box bg-white text-gray-800 shadow-2xl border border-gray-100">
                         <h3 className="font-bold text-xl text-red-600 mb-4">Excluir Bimestre</h3>
                         {deleteConfirmStep === 1 ? (
                             <>
-                                <p className="mb-4">Tem certeza que deseja excluir o bimestre <strong>{bimestreToDelete?.name}</strong>?</p>
+                                <p className="mb-4 text-gray-700">Tem certeza que deseja excluir o bimestre <strong>{bimestreToDelete?.name}</strong>?</p>
                                 <div className="alert alert-warning">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                    <span><strong>Atenção:</strong> Ao excluir este bimestre, todas as matérias associadas serão desvinculadas automaticamente.</span>
+                                    <span className="text-gray-800"><strong>Atenção:</strong> Ao excluir este bimestre, todas as matérias associadas serão desvinculadas automaticamente.</span>
                                 </div>
                                 <div className="modal-action mt-6">
-                                    <button className="btn btn-ghost" onClick={() => setDeleteModalOpen(false)}>Cancelar</button>
-                                    <button className="btn btn-error text-white" onClick={handleConfirmDelete}>Continuar</button>
+                                    <button className="btn btn-ghost text-gray-500 hover:bg-gray-100" onClick={() => setDeleteModalOpen(false)}>Cancelar</button>
+                                    <button className="btn btn-error text-white shadow-md border-none" onClick={handleConfirmDelete}>Continuar</button>
                                 </div>
                             </>
                         ) : (
                             <>
-                                <p className="mb-4">Para confirmar a exclusão e o <strong>desvínculo automático de {bimestreToDelete?.courses.length} matérias</strong>, clique em Confirmar Exclusão.</p>
+                                <p className="mb-4 text-gray-700">Para confirmar a exclusão e o <strong>desvínculo automático de {bimestreToDelete?.courses.length} matérias</strong>, clique em Confirmar Exclusão.</p>
                                 <div className="modal-action">
-                                    <button className="btn btn-ghost" onClick={() => setDeleteModalOpen(false)}>Cancelar</button>
-                                    <button className="btn btn-error text-white" onClick={handleConfirmDelete}>Confirmar Exclusão</button>
+                                    <button className="btn btn-ghost text-gray-500 hover:bg-gray-100" onClick={() => setDeleteModalOpen(false)}>Cancelar</button>
+                                    <button className="btn btn-error text-white shadow-md border-none" onClick={handleConfirmDelete}>Confirmar Exclusão</button>
                                 </div>
                             </>
                         )}

@@ -22,4 +22,5 @@ urlpatterns = [
     path(f'{DEFAULT_API_PREFIX}/<str:pk>/student/<str:student_id>/submissions/', ActivityStudentSubmissionDetailView.as_view(), name='activity-student-submissions'),
     path(f'{DEFAULT_API_PREFIX}/<str:pk>/student/<str:student_id>/submit-review/', ActivityReturnToStudentReviewView.as_view(), name='activity-submit-review'),
     path(f'{DEFAULT_API_PREFIX}/<str:pk>/student/<str:student_id>/upload-submission/', ActivitySubmissionFileUploadView.as_view(), name='activity-upload-submission'),
+    
 ]
