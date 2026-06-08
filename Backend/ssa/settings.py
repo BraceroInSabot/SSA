@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'apps.Course',
     'apps.Activity',
     'apps.Question',
+    'apps.PracticeExam',
     'corsheaders',
     'simple_history'
 ]
