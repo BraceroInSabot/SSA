@@ -11,11 +11,17 @@ def generate_access_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 class CampaignGroup(models.Model):
+    class CampaignStatus(models.TextChoices):
+        ACTIVE = 'ACT', 'Active'
+        INACTIVE = 'INA', 'Inactive'
+        FINISHED = 'FIN', 'Finished'
+
     campaign_id = models.UUIDField(primary_key=True, default=uuid4, editable=False, db_column='campaign_PK')
     name = models.CharField(max_length=255, db_column='campaign_name')
     description = models.TextField(db_column='campaign_description', blank=True, null=True)
     access_code = models.CharField(max_length=10, default=generate_access_code, db_column='campaign_access_code')
-    is_active = models.BooleanField(default=True, db_column='campaign_is_active')
+    status = models.CharField(max_length=3, choices=CampaignStatus.choices, default=CampaignStatus.ACTIVE, db_column='campaign_status')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='campaigns_created', db_column='campaign_created_by_FK', null=True)
     created_at = models.DateTimeField(auto_now_add=True, db_column='campaign_created_at')
 
     def __str__(self):
@@ -25,15 +31,15 @@ class CampaignGroup(models.Model):
         verbose_name = 'Campaign Group'
         verbose_name_plural = 'Campaign Groups'
         db_table = 'Campaign_Group'
-        
+
 class CampaignRanking(models.Model):
     """
-    Armazena os pontos isolados (Gamificação) dos alunos de forma segregada ao total_grade.
+    Armazena os pontos isolados (Gamificaǜo) dos alunos de forma segregada ao total_grade.
     """
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     campaign = models.ForeignKey(CampaignGroup, on_delete=models.CASCADE, related_name='rankings')
     student = models.ForeignKey(User, on_delete=models.CASCADE)
-    points = models.FloatField(default=0.0)
+    points = models.IntegerField(default=0)
     
     def __str__(self):
         return f"{self.student.name} - {self.points}"  # type: ignore
@@ -55,7 +61,6 @@ class PracticeExam(models.Model):
     due_date = models.DateTimeField(db_column='exam_due_date')
     description = models.TextField(db_column='exam_description')
     is_active = models.BooleanField(default=True, db_column='exam_is_active')
-    course = models.ForeignKey('Course.Course', on_delete=models.CASCADE, related_name='practice_exams', db_column='exam_course_FK')
     status = models.CharField(max_length=3, choices=ExamStatus.choices, default=ExamStatus.DRAFT, db_column='exam_status')
     questions = models.ManyToManyField('Question.Question', related_name='practice_exams', db_column='exam_question_FK')
 

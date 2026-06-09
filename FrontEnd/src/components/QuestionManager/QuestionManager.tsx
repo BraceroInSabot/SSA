@@ -3,6 +3,8 @@ import { type QuestionDefinition } from '../../types/Activity';
 import QuestionForm from './QuestionForm';
 import QuestionList from './QuestionList';
 import { api } from '../../services/api';
+import { listCourses } from '../../services/CourseCrud';
+import { listBimestres } from '../../services/BimestreCrud';
 
 interface QuestionManagerProps {
     activityId: string;
@@ -12,6 +14,14 @@ export default function QuestionManager({ activityId }: QuestionManagerProps) {
     const [questions, setQuestions] = useState<QuestionDefinition[]>([]);
     const [editingQuestion, setEditingQuestion] = useState<QuestionDefinition | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Bank state
+    const [activeTab, setActiveTab] = useState<'CREATE' | 'BANK'>('CREATE');
+    const [bankQuestions, setBankQuestions] = useState<QuestionDefinition[]>([]);
+    const [courses, setCourses] = useState<any[]>([]);
+    const [bimestres, setBimestres] = useState<any[]>([]);
+    const [filterCourse, setFilterCourse] = useState('');
+    const [filterBimester, setFilterBimester] = useState('');
 
     const fetchQuestions = async () => {
         setIsLoading(true);
@@ -25,9 +35,39 @@ export default function QuestionManager({ activityId }: QuestionManagerProps) {
         }
     };
 
+    const fetchBankData = async () => {
+        try {
+            const [cData, bData] = await Promise.all([listCourses(), listBimestres()]);
+            setCourses(cData);
+            setBimestres(bData);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     useEffect(() => {
         if (activityId) fetchQuestions();
+        fetchBankData();
     }, [activityId]);
+
+    const fetchBankQuestions = async () => {
+        try {
+            const params = new URLSearchParams();
+            if (filterCourse) params.append('course', filterCourse);
+            if (filterBimester) params.append('bimester', filterBimester);
+            
+            const response = await api.get(`/question/bank/?${params.toString()}`);
+            setBankQuestions(response.data);
+        } catch (error) {
+            console.error("Erro ao carregar banco de questões:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'BANK') {
+            fetchBankQuestions();
+        }
+    }, [activeTab, filterCourse, filterBimester]);
 
     const handleSaveQuestion = async (questionData: Partial<QuestionDefinition>) => {
         try {
@@ -91,6 +131,16 @@ export default function QuestionManager({ activityId }: QuestionManagerProps) {
         }
     };
 
+    const handleLinkQuestion = async (qId: string) => {
+        try {
+            await api.post(`/activities/${activityId}/link-questions/`, { question_ids: [qId] });
+            alert("Questão vinculada com sucesso!");
+            fetchQuestions();
+        } catch (error) {
+            alert("Erro ao vincular questão.");
+        }
+    };
+
     return (
         <section className="flex flex-col gap-6 w-full bg-white p-4 rounded-lg shadow-sm border">
             <h3 className="text-xl font-bold text-gray-800">Questões da Atividade</h3>
@@ -107,11 +157,59 @@ export default function QuestionManager({ activityId }: QuestionManagerProps) {
                 />
             )}
 
-            <QuestionForm 
-                initialData={editingQuestion || undefined}
-                onSave={handleSaveQuestion}
-                onCancel={() => setEditingQuestion(null)}
-            />
+            <div className="border-t pt-4">
+                <div className="tabs tabs-boxed mb-4">
+                    <a className={`tab ${activeTab === 'CREATE' ? 'tab-active font-bold' : ''}`} onClick={() => setActiveTab('CREATE')}>Criar Questão</a> 
+                    <a className={`tab ${activeTab === 'BANK' ? 'tab-active font-bold' : ''}`} onClick={() => setActiveTab('BANK')}>Banco de Questões</a> 
+                </div>
+
+                {activeTab === 'CREATE' && (
+                    <QuestionForm 
+                        initialData={editingQuestion || undefined}
+                        onSave={handleSaveQuestion}
+                        onCancel={() => setEditingQuestion(null)}
+                    />
+                )}
+
+                {activeTab === 'BANK' && (
+                    <div className="bg-gray-50 p-4 rounded-lg border">
+                        <div className="flex gap-4 mb-4">
+                            <select className="select select-bordered w-full max-w-xs" value={filterBimester} onChange={e => setFilterBimester(e.target.value)}>
+                                <option value="">Todos os Bimestres</option>
+                                {bimestres.map(b => (
+                                    <option key={b.bimester_id} value={b.bimester_id}>{b.name}</option>
+                                ))}
+                            </select>
+                            <select className="select select-bordered w-full max-w-xs" value={filterCourse} onChange={e => setFilterCourse(e.target.value)}>
+                                <option value="">Todas as Matérias</option>
+                                {courses.map(c => (
+                                    <option key={c.course_id} value={c.course_id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 max-h-96 overflow-y-auto">
+                            {bankQuestions.map(q => (
+                                <div key={q.question_id} className="bg-white p-3 border rounded shadow-sm flex justify-between items-center">
+                                    <div className="flex-1">
+                                        <p className="font-semibold text-gray-700 line-clamp-2">{q.question_description}</p>
+                                        <span className="text-xs text-gray-500">Tipo: {q.question_type} | Valor: {q.question_expected_result}</span>
+                                    </div>
+                                    <button 
+                                        className="btn btn-sm btn-outline btn-success ml-4"
+                                        onClick={() => handleLinkQuestion(q.question_id!)}
+                                    >
+                                        Vincular
+                                    </button>
+                                </div>
+                            ))}
+                            {bankQuestions.length === 0 && (
+                                <p className="text-gray-500 text-center py-4">Nenhuma questão encontrada no banco.</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
         </section>
     );
 }

@@ -19,10 +19,10 @@ class CampaignGroupViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if getattr(user, 'is_teacher', False):
             return CampaignGroup.objects.all()
-        return CampaignGroup.objects.filter(is_active=True, rankings__student=user).distinct()
+        return CampaignGroup.objects.filter(status=CampaignGroup.CampaignStatus.ACTIVE, rankings__student=user).distinct()
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'finish', 'ranking_update', 'ranking_remove']:
             return [IsAuthenticated(), IsTeacher()]
         return super().get_permissions()
 
@@ -32,7 +32,7 @@ class CampaignGroupViewSet(viewsets.ModelViewSet):
         if not access_code:
             return Response({'error': 'Access code required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            campaign = CampaignGroup.objects.get(access_code=access_code, is_active=True)
+            campaign = CampaignGroup.objects.get(access_code=access_code, status=CampaignGroup.CampaignStatus.ACTIVE)
         except CampaignGroup.DoesNotExist:
             return Response({'error': 'Invalid or inactive access code'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -43,7 +43,39 @@ class CampaignGroupViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Joined campaign successfully', 'campaign_id': campaign.campaign_id})
         else:
             return Response({'status': 'Already joined this campaign', 'campaign_id': campaign.campaign_id})
+            
+    @action(detail=True, methods=['post'], url_path='finish')
+    def finish(self, request, pk=None):
+        campaign = self.get_object()
+        campaign.status = CampaignGroup.CampaignStatus.FINISHED
+        campaign.save()
+        return Response({'status': 'Campaign finished'})
         
+    @action(detail=True, methods=['patch'], url_path='ranking/(?P<student_id>[^/.]+)')
+    def ranking_update(self, request, pk=None, student_id=None):
+        campaign = self.get_object()
+        try:
+            ranking = CampaignRanking.objects.get(campaign=campaign, student__id=student_id)
+        except CampaignRanking.DoesNotExist:
+            return Response({'error': 'Participant not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        points = request.data.get('points')
+        if points is not None:
+            ranking.points = points
+            ranking.save()
+            return Response({'status': 'Points updated', 'points': ranking.points})
+        return Response({'error': 'Points not provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    @action(detail=True, methods=['delete'], url_path='ranking/(?P<student_id>[^/.]+)/remove')
+    def ranking_remove(self, request, pk=None, student_id=None):
+        campaign = self.get_object()
+        try:
+            ranking = CampaignRanking.objects.get(campaign=campaign, student__id=student_id)
+            ranking.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except CampaignRanking.DoesNotExist:
+            return Response({'error': 'Participant not found'}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=True, methods=['get'], url_path='ranking')
     def ranking(self, request, pk=None):
         """

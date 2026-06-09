@@ -11,6 +11,10 @@ import CourseDetails from '../page/CourseDetails';
 import PracticeExamResponder from '../page/PracticeExamResponder';
 import ExamsHub from '../page/ExamsHub';
 import Campaigns from '../page/Campaigns';
+import CampaignLobby from '../page/CampaignLobby';
+import Podium from '../page/Podium';
+import PracticeExamEditor from '../page/PracticeExamEditor';
+
 
 const router = createBrowserRouter([
   {
@@ -60,6 +64,22 @@ const router = createBrowserRouter([
   {
     path: '/campanhas',
     element: <Campaigns />,
+  },
+  {
+    path: '/campanhas/:id/lobby',
+    element: <CampaignLobby />,
+  },
+  {
+    path: '/campanhas/:id/new-practice-exam',
+    element: <PracticeExamEditor />,
+  },
+  {
+    path: '/simulados/novo',
+    element: <PracticeExamEditor />,
+  },
+  {
+    path: '/campanhas/:id/podio',
+    element: <Podium />,
   },
   {
     path: '/simulado/:id/responder',

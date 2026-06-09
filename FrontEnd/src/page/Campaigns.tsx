@@ -71,14 +71,13 @@ function Campaigns() {
         }
     };
 
-    console.log("campaigns", ranking);
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden text-gray-800">
             <NavBar />
             
             <div className="flex-1 flex flex-col h-full overflow-y-auto p-8">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-black text-[#1E3A8A]">Simulados Gamificados (Campanhas)</h1>
+                    <h1 className="text-3xl font-black text-[#1E3A8A]">Jogo dos Simulados</h1>
                     <div className="flex gap-4">
                         {user?.is_teacher ? (
                             <button onClick={() => setIsCreateModalOpen(true)} className="btn bg-[#1E3A8A] text-white hover:bg-[#1e326b]">
@@ -129,7 +128,7 @@ function Campaigns() {
                                 {user?.is_teacher && (
                                     <div className="mb-6 flex gap-4">
                                         <button 
-                                            onClick={() => navigate(`/atividade/novo?campaign_id=${selectedCampaign.campaign_id}&type=SIM`)} 
+                                            onClick={() => navigate(`/campanhas/${selectedCampaign.campaign_id}/new-practice-exam`)} 
                                             className="btn btn-outline border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6] hover:text-white"
                                         >
                                             Adicionar Simulado
@@ -140,16 +139,48 @@ function Campaigns() {
                                         >
                                             Ver Simulados da Campanha
                                         </button>
+                                        {selectedCampaign.status !== 'FIN' && (
+                                            <button 
+                                                onClick={async () => {
+                                                    await import('../services/api').then(m => m.api.post(`/api/v1/campaigns/${selectedCampaign.campaign_id}/finish/`));
+                                                    fetchCampaigns();
+                                                    navigate(`/campanhas/${selectedCampaign.campaign_id}/podio`);
+                                                }}
+                                                className="btn bg-yellow-500 text-white hover:bg-yellow-600"
+                                            >
+                                                Finalizar Campanha
+                                            </button>
+                                        )}
+                                        {selectedCampaign.status === 'FIN' && (
+                                            <button 
+                                                onClick={() => navigate(`/campanhas/${selectedCampaign.campaign_id}/podio`)}
+                                                className="btn bg-purple-600 text-white hover:bg-purple-700"
+                                            >
+                                                Ver Pódio
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                                 
                                 {!user?.is_teacher && (
                                      <div className="mb-6">
                                          <button 
-                                            onClick={() => navigate(`/atividades?campaign_id=${selectedCampaign.campaign_id}`)}
+                                            onClick={() => navigate(`/campanhas/${selectedCampaign.campaign_id}/lobby`)}
                                             className="btn bg-[#3B82F6] text-white hover:bg-blue-600"
                                          >
-                                            Ver Provas da Campanha
+                                            Ir para o Lobby da Campanha
+                                         </button>
+                                         <button 
+                                            onClick={async () => {
+                                                if (window.confirm('Tem certeza que deseja sair desta campanha? Seus pontos serão perdidos irreversivelmente.')) {
+                                                    await import('../services/api').then(m => m.api.delete(`/api/v1/campaigns/${selectedCampaign.campaign_id}/ranking/${user!.id}/remove/`));
+                                                    setSelectedCampaign(null);
+                                                    fetchCampaigns();
+                                                }
+                                            }}
+                                            className="btn bg-red-500 text-white hover:bg-red-600 ml-4"
+                                         >
+                                            Sair da Campanha
                                          </button>
                                      </div>
                                 )}
@@ -163,6 +194,7 @@ function Campaigns() {
                                                 <th className="w-16">Posição</th>
                                                 <th>Aluno</th>
                                                 <th className="text-right">Pontos</th>
+                                                {user?.is_teacher && <th className="text-center w-24">Ações</th>}
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -186,6 +218,37 @@ function Campaigns() {
                                                         </div>
                                                     </td>
                                                     <td className="text-right font-bold text-[#10B981]">{r.total_points || 0}</td>
+                                                    {user?.is_teacher && (
+                                                        <td className="text-center">
+                                                            <div className="flex justify-center gap-2">
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        const newPoints = window.prompt("Nova pontuação:", r.total_points);
+                                                                        if (newPoints !== null) {
+                                                                            await import('../services/api').then(m => m.api.patch(`/api/v1/campaigns/${selectedCampaign.campaign_id}/ranking/${r.student_id}/`, { points: parseInt(newPoints) }));
+                                                                            handleSelectCampaign(selectedCampaign);
+                                                                        }
+                                                                    }}
+                                                                    className="btn btn-xs btn-outline btn-info"
+                                                                    title="Modificar Pontos"
+                                                                >
+                                                                    ✎
+                                                                </button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (window.confirm("Expulsar aluno?")) {
+                                                                            await import('../services/api').then(m => m.api.delete(`/api/v1/campaigns/${selectedCampaign.campaign_id}/ranking/${r.student_id}/remove/`));
+                                                                            handleSelectCampaign(selectedCampaign);
+                                                                        }
+                                                                    }}
+                                                                    className="btn btn-xs btn-outline btn-error"
+                                                                    title="Expulsar"
+                                                                >
+                                                                    ✗
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    )}
                                                 </tr>
                                             ))}
                                         </tbody>

@@ -10,6 +10,16 @@ export const getPracticeExam = async (id: string) => {
     return response.data;
 };
 
+export const createPracticeExam = async (data: any) => {
+    const response = await api.post('/practice-exams/', data);
+    return response.data;
+};
+
+export const updatePracticeExam = async (examId: string, data: any) => {
+    const response = await api.patch(`/practice-exams/${examId}/`, data);
+    return response.data;
+};
+
 export const submitPracticeExam = async (data: any) => {
     const response = await api.post('/practice-exam-submissions/', data);
     return response.data;

@@ -36,6 +36,7 @@ class PracticeExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = PracticeExam
         fields = '__all__'
+        read_only_fields = ['exam_id']
 
 class PracticeExamSubmissionSerializer(serializers.ModelSerializer):
     class Meta:

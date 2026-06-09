@@ -78,6 +78,7 @@ export default function ActivityEditor() {
                 has_submission: res.has_submission,
                 //@ts-ignore
                 course: res.course,
+                campaign: res.campaign || null
             });
             setStatus(res.status || 'DRF');
             setAttachedFiles(res.attached_files || []);
@@ -360,7 +361,7 @@ export default function ActivityEditor() {
                                 </div>
 
                                 {/* MOTOR DE QUESTÕES */}
-                                {(formData.activity_type === 'TST' || formData.activity_type === 'SIM') && (
+                                {(formData.activity_type === 'TST' || formData.activity_type === 'SIM') && activityId && (
                                     <div className="card bg-white shadow-sm border border-gray-200 overflow-hidden">
                                         <div className="p-6">
                                             <QuestionManager activityId={activityId} />

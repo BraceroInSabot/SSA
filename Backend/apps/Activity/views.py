@@ -150,10 +150,11 @@ class ActivityViewSet(
         )
 
         return Response({"detail": "Log registrado silenciosamente."}, status=status.HTTP_201_CREATED)
-    @action(detail=True, methods=['post'], url_path='clone-questions')
-    def clone_questions(self, request, pk=None) -> Response:
+    @action(detail=True, methods=['post'], url_path='link-questions')
+    def link_questions(self, request, pk=None) -> Response:
         """
-        [RnF045] Realiza Deep Copy de questões de outras atividades para este simulado.
+        [REQ013] Vincula questões existentes à nova atividade SIM através do relacionamento Many-to-Many,
+        sem duplicar o registro no banco.
         """
         activity = self.get_object()
         question_ids = request.data.get('question_ids', [])
@@ -161,17 +162,13 @@ class ActivityViewSet(
         if not isinstance(question_ids, list) or not question_ids:
             raise ValidationError({"detail": "O payload deve conter uma lista 'question_ids'."})
             
-        questions_to_clone = Question.objects.filter(pk__in=question_ids)
+        questions_to_link = Question.objects.filter(pk__in=question_ids)
         
-        cloned_count = 0
         with transaction.atomic():
-            for q in questions_to_clone:
-                q.pk = None # Setting PK to None forces Django to CREATE a new record instead of UPDATE.
-                q.activity = activity
-                q.save()
-                cloned_count += 1
+            for q in questions_to_link:
+                q.activity.add(activity)
                 
-        return Response({"detail": f"{cloned_count} questões foram clonadas para o simulado."}, status=status.HTTP_201_CREATED)
+        return Response({"detail": f"{questions_to_link.count()} questões foram vinculadas ao simulado."}, status=status.HTTP_201_CREATED)
 
 class ListActivityQuestionsView(ListModelMixin, GenericViewSet):
     """
