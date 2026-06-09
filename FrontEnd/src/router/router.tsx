@@ -8,6 +8,9 @@ import ActivityEvaluator from '../page/ActivityEvaluator';
 import ProfilePage from '../page/Profile';
 import Bimestres from '../page/Bimestres';
 import CourseDetails from '../page/CourseDetails';
+import PracticeExamResponder from '../page/PracticeExamResponder';
+import ExamsHub from '../page/ExamsHub';
+import Campaigns from '../page/Campaigns';
 
 const router = createBrowserRouter([
   {
@@ -49,6 +52,18 @@ const router = createBrowserRouter([
   {
     path: '/curso/:id',
     element: <CourseDetails />,
+  },
+  {
+    path: '/provas',
+    element: <ExamsHub />,
+  },
+  {
+    path: '/campanhas',
+    element: <Campaigns />,
+  },
+  {
+    path: '/simulado/:id/responder',
+    element: <PracticeExamResponder />,
   }
 ]);
 

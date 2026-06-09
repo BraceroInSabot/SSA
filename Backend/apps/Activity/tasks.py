@@ -1,9 +1,19 @@
 from celery import shared_task
-from django.core.management import call_command
+from django.utils.timezone import now
+from apps.Activity.models import Activity
 
 @shared_task
-def run_clean_drafts():
+def publish_scheduled_activities():
     """
-    Executa o comando customizado para expurgar rascunhos de atividades da base de dados.
+    [RnF046] Garante a publicação automatizada de simulados e provas.
+    Deve ser mapeado no celery-beat-schedule (ex: a cada 1 minuto).
     """
-    call_command('clean_drafts')
+    activities_to_publish = Activity.objects.filter(
+        status=Activity.ActivityStatus.DRAFT,
+        to_be_launched__lte=now(),
+        is_active=True
+    )
+    
+    updated_count = activities_to_publish.update(status=Activity.ActivityStatus.PUBLISHED)
+    
+    return f"{updated_count} atividades publicadas automaticamente pelo Celery."

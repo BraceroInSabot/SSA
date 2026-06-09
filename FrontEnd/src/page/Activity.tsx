@@ -299,7 +299,7 @@ export default function SingleActivity() {
                         <div className="mb-10">
                             {user?.is_student && activity.has_submission && activity.is_active && !activity.has_student_submission && (
                                 <div className="mt-8 pt-8 border-t border-gray-100">
-                                    {activity.activity_type === 'TST' ? (
+                                    {(activity.activity_type === 'TST' || activity.activity_type === 'SIM') ? (
                                         <div className="flex justify-center md:justify-start">
                                             <button onClick={() => navigate(`/atividade/${activity.activity_id}/responder`)} className="btn bg-[#3B82F6] hover:bg-blue-700 text-white border-none px-10 py-3 h-auto shadow-md rounded-lg font-bold text-lg w-full md:w-auto">
                                                 Acessar e Responder Prova

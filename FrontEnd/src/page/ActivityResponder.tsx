@@ -3,6 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { retrieveActivity } from '../services/ActivityCrud';
 import { api } from '../services/api';
 import { type Activity, type QuestionDefinition } from '../types/Activity';
+import { useAntiCheat } from './useAntiCheat';
+
+// Wrapper component to conditionally call the hook
+function AntiCheatWrapper({ activityId, isActive }: { activityId: string, isActive: boolean }) {
+    if (isActive) {
+        useAntiCheat(activityId);
+    }
+    return null;
+}
 
 export default function ActivityResponder() {
     const { id } = useParams<{ id: string }>();
@@ -150,6 +159,7 @@ export default function ActivityResponder() {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans text-[#0F172A]">
+            <AntiCheatWrapper activityId={id!} isActive={activity.activity_type === 'SIM'} />
             {toast && (
                 <div className="toast toast-top toast-end z-[100]">
                     <div className={`alert ${toast.type === 'success' ? 'alert-success bg-[#14B8A6] text-white' : 'alert-error bg-[#F97316] text-white'}`}>

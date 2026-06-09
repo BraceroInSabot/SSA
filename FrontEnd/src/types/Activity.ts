@@ -41,7 +41,7 @@ export interface Activity {
     
     // POR QUE: Sem isso, os seus ifs (activity_type === 'FIL') vão quebrar. 
     // Isso garante que o TS saiba que a atividade pode ser de envio de arquivo.
-    activity_type: 'ATV' | 'LAB' | 'PRJ' | 'TST' | 'FIL'; 
+    activity_type: 'ATV' | 'LAB' | 'PRJ' | 'TST' | 'FIL' | 'SIM'; 
     
     // POR QUE: Fundamental para esconder a Dropzone de Upload depois que o aluno enviar o trabalho.
     // Se isso não estiver mapeado, o aluno poderá enviar arquivos infinitamente.

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import NavBar from '../components/NavBar/NavBar';
 import QuestionManager from '../components/QuestionManager/QuestionManager';
@@ -12,6 +12,7 @@ export default function ActivityEditor() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { user } = useAuth();
     
     const [activityId, setActivityId] = useState<string | null>(id || null);
@@ -23,6 +24,10 @@ export default function ActivityEditor() {
     const nextWeek = new Date(today);
     nextWeek.setDate(today.getDate() + 7);
 
+    const presetType = searchParams.get('type');
+    const campaignId = searchParams.get('campaign_id');
+    const isSimulado = presetType === 'SIM';
+
     // Estado Unificado
     const [formData, setFormData] = useState({
         name: '',
@@ -30,10 +35,11 @@ export default function ActivityEditor() {
         to_be_launched: today.toISOString().slice(0, 10),
         due_date: nextWeek.toISOString().slice(0, 10),
         total_grade: 1,
-        activity_type: 'TST',
+        activity_type: presetType || 'TST',
         is_active: true,
         has_submission: true,
-        course: location.state?.courseId || ''
+        course: location.state?.courseId || '',
+        campaign: campaignId || null
     });
 
     // Gerenciamento de Arquivos
@@ -71,7 +77,7 @@ export default function ActivityEditor() {
                 is_active: res.is_active,
                 has_submission: res.has_submission,
                 //@ts-ignore
-                course: res.course
+                course: res.course,
             });
             setStatus(res.status || 'DRF');
             setAttachedFiles(res.attached_files || []);
@@ -265,7 +271,7 @@ export default function ActivityEditor() {
                                         name="activity_type" 
                                         value={formData.activity_type} 
                                         onChange={handleChange} 
-                                        disabled={!isTeacher} 
+                                        disabled={!isTeacher || isSimulado} 
                                         className="select select-bordered w-full bg-gray-50 text-gray-800 font-medium"
                                         required
                                     >
@@ -274,7 +280,9 @@ export default function ActivityEditor() {
                                         <option value="PRJ">Projeto</option>
                                         <option value="TST">Teste / Avaliação (Com Questões)</option>
                                         <option value="FIL">Envio de Arquivo</option>
+                                        <option value="SIM">Simulado (Gamificação)</option>
                                     </select>
+                                    {isSimulado && <p className="text-xs text-blue-500 mt-1">Este simulado está vinculado à uma campanha.</p>}
                                 </div>
 
                                 {isTeacher && (
@@ -352,7 +360,7 @@ export default function ActivityEditor() {
                                 </div>
 
                                 {/* MOTOR DE QUESTÕES */}
-                                {formData.activity_type === 'TST' && (
+                                {(formData.activity_type === 'TST' || formData.activity_type === 'SIM') && (
                                     <div className="card bg-white shadow-sm border border-gray-200 overflow-hidden">
                                         <div className="p-6">
                                             <QuestionManager activityId={activityId} />

@@ -129,6 +129,49 @@ class ActivityViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Activity submitted successfully."}, status=status.HTTP_200_OK)
+        
+    @action(detail=True, methods=['post'], url_path='anti-cheat-log')
+    def anti_cheat_log(self, request, pk=None) -> Response:
+        """
+        [RnF044] Registra eventos de saída/blur da tela pelo aluno durante um Simulado.
+        """
+        activity = self.get_object()
+        user = request.user
+
+        if activity.activity_type != 'SIM':
+            return Response({"detail": "Logs de Anti-Cheat são exclusivos de simulados."}, status=status.HTTP_400_BAD_REQUEST)
+
+        duration = request.data.get('duration_seconds', 0)
+
+        from apps.PracticeExam.models import AntiCheatLog
+        AntiCheatLog.objects.create(
+            student=user,
+            duration_seconds=duration,
+        )
+
+        return Response({"detail": "Log registrado silenciosamente."}, status=status.HTTP_201_CREATED)
+    @action(detail=True, methods=['post'], url_path='clone-questions')
+    def clone_questions(self, request, pk=None) -> Response:
+        """
+        [RnF045] Realiza Deep Copy de questões de outras atividades para este simulado.
+        """
+        activity = self.get_object()
+        question_ids = request.data.get('question_ids', [])
+        
+        if not isinstance(question_ids, list) or not question_ids:
+            raise ValidationError({"detail": "O payload deve conter uma lista 'question_ids'."})
+            
+        questions_to_clone = Question.objects.filter(pk__in=question_ids)
+        
+        cloned_count = 0
+        with transaction.atomic():
+            for q in questions_to_clone:
+                q.pk = None # Setting PK to None forces Django to CREATE a new record instead of UPDATE.
+                q.activity = activity
+                q.save()
+                cloned_count += 1
+                
+        return Response({"detail": f"{cloned_count} questões foram clonadas para o simulado."}, status=status.HTTP_201_CREATED)
 
 class ListActivityQuestionsView(ListModelMixin, GenericViewSet):
     """

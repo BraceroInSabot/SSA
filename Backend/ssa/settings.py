@@ -181,6 +181,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.Activity.tasks.run_clean_drafts',
         'schedule': crontab(minute=0, hour=0),
     },
+    'publish-practice-exams-every-minute': {
+        'task': 'apps.PracticeExam.tasks.publish_scheduled_practice_exams',
+        'schedule': crontab(minute='*'),
+    },
 }
 
 if DEBUG:

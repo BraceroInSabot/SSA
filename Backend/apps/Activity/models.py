@@ -12,6 +12,7 @@ class Activity(models.Model):
         PRJ = 'PRJ', 'Project'
         TST = 'TST', 'Test'
         FIL = 'FIL', 'File'
+        SIM = 'SIM', 'Simulado'
         
     class ActivityStatus(models.TextChoices):
         DRAFT = 'DRF', 'Draft'
@@ -27,6 +28,7 @@ class Activity(models.Model):
     description = models.TextField(db_column='activity_description')
     is_active = models.BooleanField(default=True, db_column='activity_is_active')
     course = models.ForeignKey('Course.Course', on_delete=models.CASCADE, related_name='activities', db_column='activity_course_FK')
+    campaign = models.ForeignKey('PracticeExam.CampaignGroup', on_delete=models.SET_NULL, null=True, blank=True, related_name='activities', db_column='activity_campaign_FK')
     activity_type = models.CharField(max_length=3, default=ActivityType.ATV, choices=ActivityType.choices, db_column='activity_type')
     status = models.CharField(max_length=3, choices=ActivityStatus.choices, default=ActivityStatus.DRAFT, db_column='activity_status')
     
